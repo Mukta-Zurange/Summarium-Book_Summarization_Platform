@@ -666,14 +666,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 .profile-signout:hover { background: rgba(192,98,90,0.08); }
 
-/* ─── RESPONSIVE ─── */
-@media (max-width: 600px) {
-    .auth-card { padding: 32px 24px; }
-    .content-card { padding: 28px 20px; }
-    .topnav { padding: 12px 16px; }
-    .logo-name { display: none; }
-    .topnav-wrap { width: calc(100% - 24px); }
-}
+
 
 /* ════════════════════════════════
    DARK MODE
@@ -847,3 +840,4 @@ select.field-input {
     appearance: none;
     cursor: pointer;
 }
+

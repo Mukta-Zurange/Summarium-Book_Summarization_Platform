@@ -12,6 +12,7 @@ function showToast(message, type="primary") {
 function showLogin() {
     document.getElementById("login-form").style.display = "block";
     document.getElementById("register-form").style.display = "none";
+    document.getElementById("forgot-form").style.display = "none";
     document.getElementById("login-tab").classList.add("active");
     document.getElementById("register-tab").classList.remove("active");
 }
@@ -19,6 +20,7 @@ function showLogin() {
 function showRegister() {
     document.getElementById("login-form").style.display = "none";
     document.getElementById("register-form").style.display = "block";
+    document.getElementById("forgot-form").style.display = "none";
     document.getElementById("register-tab").classList.add("active");
     document.getElementById("login-tab").classList.remove("active");
 }
@@ -59,7 +61,6 @@ async function register() {
     }
 }
 
-
 async function login() {
     const formData = new FormData();
     formData.append("username", document.getElementById("login-email").value);
@@ -71,7 +72,6 @@ async function login() {
     const data = await response.json();
 
     if (response.ok) {
-        // Check if role matches
         if (data.role !== selectedRole) {
             showToast(
                 selectedRole === "admin"
@@ -177,11 +177,11 @@ function showUpload() {
     document.getElementById("summary-section").style.display = "none";
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
-    document.getElementById('nav-upload').classList.add('active');
-    document.getElementById('nav-summary').classList.remove('active');
-    document.getElementById('nav-books').classList.remove('active');
-    document.getElementById('nav-mindmap').classList.remove('active');
     document.getElementById("quiz-section").style.display = "none";
+    document.getElementById("nav-upload").classList.add("active");
+    document.getElementById("nav-summary").classList.remove("active");
+    document.getElementById("nav-books").classList.remove("active");
+    document.getElementById("nav-mindmap").classList.remove("active");
     document.getElementById("nav-quiz").classList.remove("active");
 }
 
@@ -190,11 +190,11 @@ function showSummary() {
     document.getElementById("summary-section").style.display = "block";
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
-    document.getElementById('nav-summary').classList.add('active');
-    document.getElementById('nav-upload').classList.remove('active');
-    document.getElementById('nav-books').classList.remove('active');
-    document.getElementById('nav-mindmap').classList.remove('active');
     document.getElementById("quiz-section").style.display = "none";
+    document.getElementById("nav-summary").classList.add("active");
+    document.getElementById("nav-upload").classList.remove("active");
+    document.getElementById("nav-books").classList.remove("active");
+    document.getElementById("nav-mindmap").classList.remove("active");
     document.getElementById("nav-quiz").classList.remove("active");
 }
 
@@ -203,11 +203,11 @@ function showBooks() {
     document.getElementById("summary-section").style.display = "none";
     document.getElementById("books-section").style.display = "block";
     document.getElementById("mindmap-section").style.display = "none";
-    document.getElementById('nav-books').classList.add('active');
-    document.getElementById('nav-upload').classList.remove('active');
-    document.getElementById('nav-summary').classList.remove('active');
-    document.getElementById('nav-mindmap').classList.remove('active');
     document.getElementById("quiz-section").style.display = "none";
+    document.getElementById("nav-books").classList.add("active");
+    document.getElementById("nav-upload").classList.remove("active");
+    document.getElementById("nav-summary").classList.remove("active");
+    document.getElementById("nav-mindmap").classList.remove("active");
     document.getElementById("nav-quiz").classList.remove("active");
     loadBooks();
 }
@@ -217,11 +217,11 @@ function showMindMap() {
     document.getElementById("summary-section").style.display = "none";
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "block";
-    document.getElementById('nav-mindmap').classList.add('active');
-    document.getElementById('nav-upload').classList.remove('active');
-    document.getElementById('nav-summary').classList.remove('active');
-    document.getElementById('nav-books').classList.remove('active');
     document.getElementById("quiz-section").style.display = "none";
+    document.getElementById("nav-mindmap").classList.add("active");
+    document.getElementById("nav-upload").classList.remove("active");
+    document.getElementById("nav-summary").classList.remove("active");
+    document.getElementById("nav-books").classList.remove("active");
     document.getElementById("nav-quiz").classList.remove("active");
 }
 
@@ -231,11 +231,11 @@ function showQuiz() {
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
     document.getElementById("quiz-section").style.display = "block";
-    document.getElementById('nav-quiz').classList.add('active');
-    document.getElementById('nav-upload').classList.remove('active');
-    document.getElementById('nav-summary').classList.remove('active');
-    document.getElementById('nav-books').classList.remove('active');
-    document.getElementById('nav-mindmap').classList.remove('active');
+    document.getElementById("nav-quiz").classList.add("active");
+    document.getElementById("nav-upload").classList.remove("active");
+    document.getElementById("nav-summary").classList.remove("active");
+    document.getElementById("nav-books").classList.remove("active");
+    document.getElementById("nav-mindmap").classList.remove("active");
 }
 
 function goToSummary() {
@@ -343,12 +343,8 @@ async function uploadBook() {
 
     if (response.ok) {
         const id = inputType === "file" ? `B${data.book_id}` : data.pasted_id;
-
-        // Show ID below button
         document.getElementById("uploaded-id").innerText = id;
         document.getElementById("upload-result").style.display = "block";
-
-        // Auto-fill all ID fields
         document.getElementById("book_id").value = id;
         document.getElementById("mindmap-book-id").value = id;
         document.getElementById("quiz-book-id").value = id;
@@ -407,10 +403,8 @@ async function generateSummary(force = false) {
     copyBtn.style.display = "none";
     downloadBtn.style.display = "none";
 
-    
     text.innerHTML = `<div style="font-size:0.875rem; color:#5a7357;" id="progress-label">Starting...</div>`;
 
-    
     if (activeInterval) {
         clearInterval(activeInterval);
         activeInterval = null;
@@ -443,7 +437,7 @@ async function generateSummary(force = false) {
         if (pollCount > maxPolls) {
             clearInterval(activeInterval);
             activeInterval = null;
-            text.innerText = "Processing is taking longer than expected. The summary may still be generating in the background. Please wait a moment and try clicking Generate Summary again — it may load from cache.";
+            text.innerText = "Processing is taking longer than expected. Please wait a moment and try clicking Generate Summary again — it may load from cache.";
             btn.disabled = false;
             btn.innerText = "Generate Summary";
             showToast("Summary generation timed out", "danger");
@@ -480,7 +474,7 @@ async function regenerateSummary() {
     const bookId = document.getElementById("book_id").value;
     if (!bookId) return;
     if (!confirm("Generate a new summary? The old one will still be saved in history.")) return;
-    await generateSummary(true);  // pass force=true
+    await generateSummary(true);
 }
 
 async function toggleHistory() {
@@ -619,7 +613,6 @@ function renderMindMap(data) {
         .style("border-radius", "12px")
         .style("background", "#f4f7f3");
 
-    // Type label
     svg.append("text")
         .attr("x", 12)
         .attr("y", 24)
@@ -675,7 +668,6 @@ function renderMindMap(data) {
         return { boxW, boxH, lines };
     }
 
-    // Draw links
     g.selectAll(".link")
         .data(root.links())
         .enter()
@@ -689,7 +681,6 @@ function renderMindMap(data) {
             return `M${d.source.px},${d.source.py} Q${mx},${my} ${d.target.px},${d.target.py}`;
         });
 
-    // Draw nodes
     const node = g.selectAll(".node")
         .data(root.descendants())
         .enter()
@@ -751,13 +742,9 @@ function exportMindMap() {
     const width = parseInt(svg.getAttribute("width")) || 900;
     const height = parseInt(svg.getAttribute("height")) || 750;
 
-    // Clone SVG and inline font as fallback
     const cloned = svg.cloneNode(true);
     const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    style.textContent = `
-        text { font-family: Arial, sans-serif; }
-        rect { }
-    `;
+    style.textContent = `text { font-family: Arial, sans-serif; }`;
     cloned.insertBefore(style, cloned.firstChild);
     cloned.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -780,7 +767,6 @@ function exportMindMap() {
     img.onload = function () {
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
-
         const link = document.createElement("a");
         link.download = `mindmap_${bookId}.jpg`;
         link.href = canvas.toDataURL("image/jpeg", 0.95);
@@ -866,10 +852,8 @@ function selectAnswer(selected, btnEl) {
     const feedback = document.getElementById("quiz-feedback");
     const nextBtn = document.getElementById("quiz-next-btn");
 
-    // Disable all options
     allOptions.forEach(b => b.classList.add("disabled"));
 
-    // Highlight correct and wrong
     allOptions.forEach(b => {
         const key = b.innerText.split(".")[0];
         if (key === correct) b.classList.add("correct");
@@ -941,7 +925,6 @@ function toggleDarkMode() {
     document.getElementById("dark-mode-btn").innerText = isDark ? "◑" : "◐";
 }
 
-// Add this new function:
 async function loadProfile() {
     const res = await fetch("/me", {
         headers: { "Authorization": "Bearer " + token }
@@ -962,29 +945,24 @@ function downloadPDF() {
     const format = getToggleValue("format-toggle");
     const length = getToggleValue("length-toggle");
 
-    // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Summarium", 20, 20);
 
-    // Subtitle
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(90, 115, 87);
     doc.text(`Book ID: ${bookId}  |  Format: ${format}  |  Length: ${length}`, 20, 30);
 
-    // Divider line
     doc.setDrawColor(90, 115, 87);
     doc.setLineWidth(0.5);
     doc.line(20, 35, 190, 35);
 
-    // Summary heading
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30, 45, 28);
     doc.text("Summary", 20, 45);
 
-    // Summary text
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(50, 50, 50);
@@ -1002,7 +980,6 @@ function downloadPDF() {
         y += 6;
     });
 
-    // Footer
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(`Generated by Summarium | ${new Date().toLocaleDateString()}`, 20, pageHeight - 10);
@@ -1016,7 +993,6 @@ function toggleProfile() {
     dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
 }
 
-// Close dropdown when clicking outside
 document.addEventListener("click", (e) => {
     const wrap = document.getElementById("profile-wrap");
     if (wrap && !wrap.contains(e.target)) {
@@ -1026,55 +1002,8 @@ document.addEventListener("click", (e) => {
 });
 
 function logout() {
-    token = "";
     localStorage.clear();
-    window.location.href = "/app"; 
-
-    // Reset all state
-    quizData = [];
-    currentQuestion = 0;
-    score = 0;
-    userAnswers = [];
-    allBooks = [];
-    activeInterval && clearInterval(activeInterval);
-    activeInterval = null;
-
-    // Reset all input fields
-    document.getElementById("book_id").value = "";
-    document.getElementById("mindmap-book-id").value = "";
-    document.getElementById("quiz-book-id").value = "";
-    document.getElementById("title").value = "";
-    document.getElementById("author").value = "";
-    document.getElementById("pasted-text").value = "";
-    document.getElementById("file-label").innerText = "Click to select a file";
-
-    // Reset all result areas
-    document.getElementById("summary-box").style.display = "none";
-    document.getElementById("summary-text").innerText = "";
-    document.getElementById("history-box").style.display = "none";
-    document.getElementById("history-list").innerHTML = "";
-    document.getElementById("mindmap-container").innerHTML = "";
-    document.getElementById("export-mindmap-btn").style.display = "none";
-    document.getElementById("quiz-box").style.display = "none";
-    document.getElementById("quiz-book-id").value = "";
-    document.getElementById("upload-result").style.display = "none";
-    document.getElementById("uploaded-id").innerText = "";
-    document.getElementById("goto-summary-btn").style.display = "none";
-    document.getElementById("regenerate-btn").style.display = "none";
-    document.getElementById("history-btn").style.display = "none";
-    document.getElementById("copy-btn").style.display = "none";
-    document.getElementById("download-btn").style.display = "none";
-    document.getElementById("books-list").innerHTML = "";
-
-    // Reset toggles
-    setToggle("format-toggle", document.querySelector("#format-toggle .toggle-btn[data-value='paragraph']"));
-    setToggle("length-toggle", document.querySelector("#length-toggle .toggle-btn[data-value='medium']"));
-    setToggle("input-type-toggle", document.querySelector("#input-type-toggle .toggle-btn[data-value='file']"));
-    switchInputType("file");
-
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById("auth-section").style.display = "flex";
-    showToast("Logged out", "warning");
+    window.location.href = "/app";
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -1092,7 +1021,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (res.ok) {
             document.getElementById("auth-section").style.display = "none";
             document.getElementById("dashboard").style.display = "block";
-            showUpload();  // ADD THIS — always start on upload page
+            showUpload();
             await loadProfile();
         } else {
             token = "";
@@ -1101,4 +1030,3 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     }
 });
-
