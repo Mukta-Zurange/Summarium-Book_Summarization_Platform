@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summarium | Book Summarizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+    <div id="app-toast" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-section" class="page-wrapper">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="floating-card auth-card">
+        <div class="card-logo">
+            <span class="logo-name">Summarium</span>
+        </div>
+        <p class="card-tagline">The Art of Intelligent Condensation.</p>
+
+        <div class="tab-switcher">
+            <button class="tab active" id="login-tab" onclick="showLogin()">Sign In</button>
+            <button class="tab" id="register-tab" onclick="showRegister()">Sign Up</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="login-form">
+            <div class="field mb-3">
+                <label>Login As</label>
+                <div class="toggle-group" id="role-toggle">
+                    <button class="toggle-btn active" data-value="user" onclick="setToggle('role-toggle', this)"> User</button>
+                    <button class="toggle-btn" data-value="admin" onclick="setToggle('role-toggle', this)"> Admin</button>
+                </div>
+            </div>
+            <div class="field mb-3">
+                <label>Email</label>
+                <input type="email" id="login-email" class="field-input" placeholder="you@example.com">
+            </div>
+            <div class="field mb-4">
+                <label>Password</label>
+                <input type="password" id="login-password" class="field-input" placeholder="••••••••">
+            </div>
+            <button class="btn-main w-100" onclick="login()">Sign In</button>
+            <div style="text-align:center; margin-top:14px;">
+                <button class="btn-forgot" onclick="showForgotPassword()">Forgot password?</button>
+            </div>
+        </div>
+
+        <!-- FORGOT PASSWORD FORM -->
+        <div id="forgot-form" style="display:none;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                <button onclick="showLoginFromForgot()" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:1.2rem;">←</button>
+                <span style="font-size:0.9rem; font-weight:600; color:var(--text);">Reset Password</span>
+            </div>
+
+            <div id="forgot-step-1">
+                <div class="field mb-3">
+                    <label>Email</label>
+                    <input type="email" id="forgot-email" class="field-input" placeholder="you@example.com">
+                </div>
+                <button class="btn-main w-100" onclick="fetchSecurityQuestion()">Continue</button>
+            </div>
+
+            <div id="forgot-step-2" style="display:none;">
+                <div class="field mb-3">
+                    <label>Security Question</label>
+                    <div id="security-question-text" style="font-size:0.9rem; font-weight:500; color:var(--text); padding:12px 14px; background:rgba(255,255,255,0.5); border-radius:10px; border:1px solid rgba(90,115,87,0.25);"></div>
+                </div>
+                <div class="field mb-4">
+                    <label>Your Answer</label>
+                    <input type="text" id="forgot-answer" class="field-input" placeholder="Your answer">
+                </div>
+                <div class="field mb-3">
+                    <label>New Password</label>
+                    <input type="password" id="forgot-new-password" class="field-input" placeholder="••••••••">
+                </div>
+                <div class="field mb-4">
+                    <label>Confirm Password</label>
+                    <input type="password" id="forgot-confirm-password" class="field-input" placeholder="••••••••">
+                </div>
+                <button class="btn-main w-100" onclick="resetPassword()">Reset Password</button>
+            </div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="register-form" style="display:none;">
+            <div class="field mb-3">
+                <label>Name</label>
+                <input type="text" id="reg-name" class="field-input" placeholder="Your name">
+            </div>
+            <div class="field mb-3">
+                <label>Email</label>
+                <input type="email" id="reg-email" class="field-input" placeholder="you@example.com">
+            </div>
+            <div class="field mb-3">
+                <label>Password</label>
+                <input type="password" id="reg-password" class="field-input" placeholder="••••••••">
+            </div>
+            <div class="field mb-3">
+                <label>Security Question</label>
+                <select id="reg-security-question" class="field-input">
+                    <option value="">Select a question...</option>
+                    <option>What is the name of your first pet?</option>
+                    <option>What was the name of your first school?</option>
+                    <option>What is your favourite childhood book?</option>
+                    <option>What city were you born in?</option>
+                </select>
+            </div>
+            <div class="field mb-4">
+                <label>Answer</label>
+                <input type="text" id="reg-security-answer" class="field-input" placeholder="Your answer">
+            </div>
+            <button class="btn-main w-100" onclick="register()">Create Account</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+    <div class="page-wrapper">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <!-- Floating Top Nav -->
+        <div class="topnav-wrap">
+            <div class="topnav floating-card">
+                <div class="card-logo">
+                    <span class="logo-name">Summarium</span>
+                </div>
+                <div class="topnav-links">
+                    <button class="nav-pill active" id="nav-upload" onclick="showUpload()">⬆ Upload</button>
+                    <button class="nav-pill" id="nav-books" onclick="showBooks()">🕮 Uploaded Books</button>
+                    <button class="nav-pill" id="nav-summary" onclick="showSummary()">✦ Summarize</button>
+                    <button class="nav-pill" id="nav-mindmap" onclick="showMindMap()">☁️ Mind Map</button>
+                    <button class="nav-pill" id="nav-quiz" onclick="showQuiz()">🧠 Quiz</button>
+                </div>
+                <button class="btn-icon" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark Mode">◑</button>
+                <div class="profile-wrap" id="profile-wrap">
+                    <button class="profile-btn" onclick="toggleProfile()">👤</button>
+                    <div class="profile-dropdown" id="profile-dropdown" style="display:none;">
+                        <div class="profile-name" id="profile-name">—</div>
+                        <div class="profile-email" id="profile-email">—</div>
+                        <hr class="profile-divider">
+                        <button class="profile-signout" onclick="logout()">↩ Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+
+            <!-- UPLOAD SECTION -->
+            <div id="upload-section">
+                <div class="floating-card content-card">
+                    <div class="content-header">
+                        <h2>Upload Content</h2>
+                        <p>Choose how you want to add content for summarization.</p>
+                    </div>
+
+                    <div class="field mb-4">
+                        <label>What do you want to upload?</label>
+                        <div class="toggle-group" id="input-type-toggle">
+                            <button class="toggle-btn active" data-value="file" onclick="setToggle('input-type-toggle', this); switchInputType('file')">📄 Upload File</button>
+                            <button class="toggle-btn" data-value="text" onclick="setToggle('input-type-toggle', this); switchInputType('text')">✎ Paste Text</button>
+                        </div>
+                    </div>
+
+                    <div id="file-upload-fields">
+                        <div class="field mb-3">
+                            <label>Book Title</label>
+                            <input type="text" id="title" class="field-input" placeholder="e.g. Sapiens">
+                        </div>
+                        <div class="field mb-3">
+                            <label>Author</label>
+                            <input type="text" id="author" class="field-input" placeholder="e.g. Yuval Noah Harari">
+                        </div>
+                        <div class="field mb-4">
+                            <label>File</label>
+                            <div class="file-zone" onclick="document.getElementById('file').click()">
+                                <input type="file" id="file" style="display:none" onchange="updateFileName(this)">
+                                <span class="file-icon">📄</span>
+                                <span id="file-label">Click to select a file</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="text-upload-fields" style="display:none;">
+                        <div class="field mb-4">
+                            <label>Paste Text</label>
+                            <textarea id="pasted-text" class="field-input" rows="10" placeholder="Paste your content here..."></textarea>
+                        </div>
+                    </div>
+
+                    <button class="btn-main" onclick="uploadBook()">Upload</button>
+
+                    <div id="upload-result" style="display:none; margin-top:16px;">
+                        <p style="font-size:0.875rem; color:var(--muted);">Uploaded successfully. Your ID: <strong id="uploaded-id" style="color:var(--accent); font-size:1rem;"></strong></p>
+                        <p style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Use this ID to generate a summary, mind map, or quiz.</p>
+                    </div>
+
+                    <button class="btn-main mt-3" id="goto-summary-btn" style="display:none; background: var(--accent2);" onclick="goToSummary()">Go to Summarization →</button>
+                </div>
+            </div>
+
+            <!-- SUMMARY SECTION -->
+            <div id="summary-section" style="display:none;">
+                <div class="floating-card content-card">
+                    <div class="content-header">
+                        <h2>Generate Summary</h2>
+                        <p>Enter a Book ID and choose your preferred summary style.</p>
+                    </div>
+
+                    <div class="field mb-3">
+                        <label>Book ID</label>
+                        <input type="text" id="book_id" class="field-input" placeholder="e.g. B1 or T3">
+                    </div>
+
+                    <div style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+                        <div class="field" style="flex:1; min-width:160px;">
+                            <label>Format</label>
+                            <div class="toggle-group" id="format-toggle">
+                                <button class="toggle-btn active" data-value="paragraph" onclick="setToggle('format-toggle', this)">¶ Paragraph</button>
+                                <button class="toggle-btn" data-value="bullet" onclick="setToggle('format-toggle', this)">• Bullet</button>
+                                <button class="toggle-btn" data-value="mindmap" onclick="setToggle('format-toggle', this)">⊛ Mind Map</button>
+                            </div>
+                        </div>
+                        <div class="field" style="flex:1; min-width:160px;">
+                            <label>Length</label>
+                            <div class="toggle-group" id="length-toggle">
+                                <button class="toggle-btn" data-value="short" onclick="setToggle('length-toggle', this)">Short</button>
+                                <button class="toggle-btn active" data-value="medium" onclick="setToggle('length-toggle', this)">Medium</button>
+                                <button class="toggle-btn" data-value="detailed" onclick="setToggle('length-toggle', this)">Detailed</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; align-items:center;">
+                        <button class="btn-main" id="generate-btn" onclick="generateSummary()">Generate Summary</button>
+                        <button class="btn-main" id="regenerate-btn" style="display:none;" onclick="regenerateSummary()">↺ Regenerate</button>
+                        <button class="btn-main" id="history-btn" style="display:none;" onclick="toggleHistory()">⌛ History</button>
+                        <button class="btn-main" id="copy-btn" style="display:none;" onclick="copySummary()">🗐 Copy</button>
+                        <button class="btn-main" id="download-btn" style="display:none;" onclick="downloadPDF()">↓ Download PDF</button>
+                    </div>
+
+                    <div id="summary-box" style="display:none;">
+                        <div class="summary-chip">✦ Summary</div>
+                        <div id="summary-text"></div>
+                    </div>
+
+                    <div id="history-box" style="display:none;">
+                        <div class="summary-chip">🕘 Summary History</div>
+                        <div id="history-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOOKS SECTION -->
+            <div id="books-section" style="display:none;">
+                <div class="floating-card content-card" id="books-card">
+                    <div class="content-header">
+                        <h2>Uploaded Books</h2>
+                        <p>Search for previously uploaded books.</p>
+                    </div>
+                    <div class="field mb-4">
+                        <input type="text" id="book-search" class="field-input" placeholder="Search by title or author..." oninput="filterBooks()">
+                    </div>
+                    <div class="books-table-wrapper">
+                        <div id="books-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIND MAP SECTION -->
+            <div id="mindmap-section" style="display:none;">
+                <div class="floating-card content-card" id="mindmap-card">
+                    <div class="content-header">
+                        <h2>Mind Map</h2>
+                        <p>Visual mind map generated from your book summary.</p>
+                    </div>
+                    <div class="field mb-4">
+                        <label>Book ID</label>
+                        <input type="text" id="mindmap-book-id" class="field-input" placeholder="e.g. B1 or T3">
+                    </div>
+                    <button class="btn-main mb-4" onclick="generateMindMap()">Generate Mind Map</button>
+                    <button class="btn-main mb-4" id="export-mindmap-btn" style="display:none; background:var(--accent2);" onclick="exportMindMap()">↓ Export as JPG</button>
+                    <div id="mindmap-container"></div>
+                </div>
+            </div>
+
+            <!-- QUIZ SECTION -->
+            <div id="quiz-section" style="display:none;">
+                <div class="floating-card content-card" id="quiz-card">
+                    <div class="content-header">
+                        <h2>Quiz Generator</h2>
+                        <p>Test your understanding of the book with an AI-generated quiz.</p>
+                    </div>
+
+                    <div class="field mb-3">
+                        <label>Book ID</label>
+                        <input type="text" id="quiz-book-id" class="field-input" placeholder="e.g. B1 or T3">
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <button class="btn-main" id="quiz-generate-btn" onclick="startQuiz()">Generate Quiz</button>
+                    </div>
+
+                    <div id="quiz-box" style="display:none;">
+                        <div id="quiz-question-box" style="display:none;">
+                            <div class="summary-chip" id="quiz-progress">Question 1 of 5</div>
+                            <div id="quiz-question" style="font-size:1rem; font-weight:600; color:var(--text); margin-bottom:20px; line-height:1.6;"></div>
+                            <div id="quiz-options" style="display:flex; flex-direction:column; gap:10px;"></div>
+                            <div id="quiz-feedback" style="display:none; margin-top:16px; padding:12px 16px; border-radius:10px; font-size:0.875rem; font-weight:500;"></div>
+                            <button class="btn-main" id="quiz-next-btn" style="display:none; margin-top:16px;" onclick="nextQuestion()">Next →</button>
+                        </div>
+
+                        <div id="quiz-results-box" style="display:none;">
+                            <div style="text-align:center; margin-bottom:28px;">
+                                <div style="font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:700; color:var(--accent);" id="quiz-score-display"></div>
+                                <div style="font-size:0.875rem; color:var(--muted); margin-top:4px;">Your Score</div>
+                                <div style="font-size:1rem; font-weight:600; color:var(--text); margin-top:12px;" id="quiz-score-msg"></div>
+                            </div>
+
+                            <div class="summary-chip">📋 Review</div>
+                            <div id="quiz-review"></div>
+
+                            <button class="btn-main" style="margin-top:20px;" onclick="startQuiz()">↺ Try Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/script.js"></script>
+<script>
+function updateFileName(input) {
+    document.getElementById('file-label').textContent =
+        input.files[0] ? input.files[0].name : 'Click to select a file';
+}
+</script>
+</body>
+</html>

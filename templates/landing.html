@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summarium | AI Book Summarizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #7d9b7a;
+            --accent:    #3d5c3a;
+            --accent2:   #2e4a2b;
+            --text:      #1e2d1c;
+            --muted:     #5a7357;
+            --surface-solid: rgba(255,255,255,0.88);
+            --border:    rgba(255,255,255,0.3);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ─── BLOBS ─── */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.35;
+            pointer-events: none;
+            animation: drift 12s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+        .blob-1 { width: 500px; height: 500px; background: #a8c5a0; top: -120px; left: -100px; animation-delay: 0s; }
+        .blob-2 { width: 400px; height: 400px; background: #5a7d55; bottom: 100px; right: -80px; animation-delay: -4s; }
+        .blob-3 { width: 300px; height: 300px; background: #c8ddc5; top: 40%; left: 55%; animation-delay: -8s; }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(30px, 20px) scale(1.05); }
+        }
+
+        /* ─── NAVBAR ─── */
+        .landing-nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: calc(100% - 48px);
+            max-width: 900px;
+        }
+
+        .nav-card {
+            background: var(--surface-solid);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(30,45,28,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .nav-link {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(61,92,58,0.08);
+            color: var(--text);
+        }
+
+        .btn-nav {
+            background: var(--accent);
+            color: #f0ede6;
+            border: none;
+            border-radius: 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 20px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(61,92,58,0.3);
+        }
+
+        .btn-nav:hover {
+            background: var(--accent2);
+            color: #f0ede6;
+        }
+
+        /* ─── SECTIONS ─── */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ─── HERO ─── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(61,92,58,0.2);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            animation: floatIn 0.6s ease both;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.8rem, 6vw, 5rem);
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.1;
+            margin-bottom: 24px;
+            animation: floatIn 0.6s 0.1s ease both;
+        }
+
+        .hero-title span {
+            color: var(--accent2);
+            font-style: italic;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: rgb(43 78 47 / 0.7);
+            max-width: 560px;
+            line-height: 1.7;
+            margin-bottom: 40px;
+            animation: floatIn 0.6s 0.2s ease both;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: floatIn 0.6s 0.3s ease both;
+        }
+
+        .btn-hero-primary {
+            background: var(--accent);
+            color: #f0ede6;
+            border: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 36px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 6px 20px rgba(61,92,58,0.35);
+        }
+
+        .btn-hero-primary:hover {
+            background: var(--accent2);
+            color: #f0ede6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(61,92,58,0.45);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255,255,255,0.6);
+            color: var(--accent);
+            border: 1.5px solid rgba(61,92,58,0.25);
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 36px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.8);
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* ─── FLOATING CARD ─── */
+        .glass-card {
+            background: var(--surface-solid);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(30,45,28,0.12);
+        }
+
+        /* ─── FEATURES ─── */
+        .features {
+            padding: 100px 24px;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .section-sub {
+            font-size: 0.95rem;
+            color: var(--muted);
+            text-align: center;
+            max-width: 480px;
+            margin: 0 auto 60px;
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            padding: 28px;
+            border-radius: 20px;
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* ─── HOW IT WORKS ─── */
+        .how-it-works {
+            padding: 100px 24px;
+        }
+
+        .steps-container {
+            max-width: 700px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 24px 28px;
+            border-radius: 16px;
+            transition: transform 0.2s;
+        }
+
+        .step-card:hover {
+            transform: translateX(6px);
+        }
+
+        .step-number {
+            background: var(--accent);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ─── FOOTER ─── */
+        .landing-footer {
+            padding: 40px 24px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 2.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- NAV -->
+<nav class="landing-nav">
+    <div class="nav-card">
+        <div class="nav-logo">Summarium</div>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+            <a href="/app" class="btn-nav">Get Started →</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge">✦ AI Powered Book Summarizer</div>
+    <h1 class="hero-title">
+        Read Less.<br>
+        <span>Understand More.</span>
+    </h1>
+    <p class="hero-subtitle">
+        Summarium uses AI to turn lengthy books into clear, concise summaries, visual mind maps, and interactive quizzes — in minutes.
+    </p>
+    <div class="hero-btns">
+        <a href="/app" class="btn-hero-primary">Get Started →</a>
+        <a href="#how-it-works" class="btn-hero-secondary">See How It Works</a>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+    <div class="section-label">✦ Features</div>
+    <h2 class="section-title">Everything You Need</h2>
+    <p class="section-sub">From summaries to mind maps, Summarium gives you multiple ways to understand any book.</p>
+
+    <div class="features-grid">
+        <div class="feature-card glass-card">
+            <span class="feature-icon">📄</span>
+            <div class="feature-title">Smart Summaries</div>
+            <p class="feature-desc">Generate paragraph or bullet point summaries in short, medium, or detailed length — tailored to your needs.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <span class="feature-icon">☁️</span>
+            <div class="feature-title">Visual Mind Maps</div>
+            <p class="feature-desc">Automatically detect content structure and generate interactive radial mind maps to visualize key concepts.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <span class="feature-icon">🕘</span>
+            <div class="feature-title">Summary History</div>
+            <p class="feature-desc">Not happy with a summary? Regenerate it anytime. All versions are saved so you can compare them.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <span class="feature-icon">🧠</span>
+            <div class="feature-title">Quiz Generator</div>
+            <p class="feature-desc">Test your understanding with AI-generated multiple choice quizzes based on your book summary.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <span class="feature-icon">📥</span>
+            <div class="feature-title">PDF Export</div>
+            <p class="feature-desc">Download any summary as a clean, formatted PDF with one click and keep it for offline reference.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <span class="feature-icon">🌙</span>
+            <div class="feature-title">Dark Mode</div>
+            <p class="feature-desc">Easy on the eyes with a beautiful dark mode that works across every section of the app.</p>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how-it-works">
+    <div class="section-label">⟶ How It Works</div>
+    <h2 class="section-title">Three Simple Steps</h2>
+    <p class="section-sub">Get your book summarized in minutes with no technical knowledge required.</p>
+
+    <div class="steps-container">
+        <div class="step-card glass-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Upload Your Book</h3>
+                <p>Upload any PDF or TXT file. Add the book title and author name. Summarium extracts the full text automatically.</p>
+            </div>
+        </div>
+        <div class="step-card glass-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Choose Your Format</h3>
+                <p>Pick paragraph or bullet format, choose the length — short, medium, or detailed — or generate a visual mind map.</p>
+            </div>
+        </div>
+        <div class="step-card glass-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Get Your Summary</h3>
+                <p>Summarium processes the book using AI and delivers a clean summary. Copy it, download it as PDF, or regenerate if needed.</p>
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="landing-footer">
+    <div class="footer-logo">Summarium</div>
+    <p class="footer-text">The Art of Intelligent Condensation.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+</script>
+</body>
+</html>

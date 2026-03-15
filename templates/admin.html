@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summarium | Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #7d9b7a;
+            --surface-solid: rgba(255,255,255,0.88);
+            --border: rgba(255,255,255,0.3);
+            --accent: #3d5c3a;
+            --accent2: #2e4a2b;
+            --text: #1e2d1c;
+            --muted: #5a7357;
+            --danger: #c0625a;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.35;
+            pointer-events: none;
+            animation: drift 12s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+        .blob-1 { width: 500px; height: 500px; background: #a8c5a0; top: -120px; left: -100px; }
+        .blob-2 { width: 400px; height: 400px; background: #5a7d55; bottom: -80px; right: -80px; animation-delay: -4s; }
+
+        @keyframes drift {
+            from { transform: translate(0,0) scale(1); }
+            to { transform: translate(30px,20px) scale(1.05); }
+        }
+
+        @keyframes floatIn {
+            from { opacity:0; transform: translateY(20px); }
+            to { opacity:1; transform: translateY(0); }
+        }
+
+        /* NAV */
+        .admin-nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: calc(100% - 48px);
+            max-width: 1100px;
+        }
+
+        .nav-card {
+            background: var(--surface-solid);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(30,45,28,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .admin-badge {
+            background: var(--accent);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid rgba(192,98,90,0.3);
+            color: var(--danger);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 7px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover { background: rgba(192,98,90,0.08); }
+
+        /* CONTENT */
+        .admin-content {
+            padding-top: 100px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* GLASS CARD */
+        .glass-card {
+            background: var(--surface-solid);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(30,45,28,0.12);
+            animation: floatIn 0.5s ease both;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            padding: 24px 28px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        /* TABS */
+        .admin-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .admin-tab {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(90,115,87,0.2);
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--muted);
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* TABLE */
+        .table-card {
+            padding: 24px;
+        }
+
+        .section-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .btn-delete {
+            background: none;
+            border: 1px solid rgba(192,98,90,0.3);
+            color: var(--danger);
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover { background: rgba(192,98,90,0.1); }
+
+        .role-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .role-admin {
+            background: rgba(61,92,58,0.15);
+            color: var(--accent);
+        }
+
+        .role-user {
+            background: rgba(90,115,87,0.1);
+            color: var(--muted);
+        }
+
+        /* ─── DARK MODE ─── */
+        body.dark {
+            --bg: #1a2419;
+            --surface-solid: rgba(30,45,28,0.92);
+            --border: rgba(255,255,255,0.1);
+            --accent: #7db87a;
+            --accent2: #5a9457;
+            --text: #e8f0e6;
+            --muted: #7a9b77;
+            --danger: #e07070;
+        }
+
+        body.dark .glass-card {
+            background: rgba(28,42,26,0.95);
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        body.dark .nav-card {
+            background: rgba(28,42,26,0.95);
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        body.dark .admin-tab {
+            background: rgba(255,255,255,0.05);
+            color: var(--muted);
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        body.dark .admin-tab.active {
+            background: var(--accent);
+            color: #1a2419;
+        }
+
+        body.dark .table {
+            --bs-table-bg: transparent;
+            color: var(--text);
+        }
+
+        body.dark .table thead tr {
+            background: rgba(125,184,122,0.15) !important;
+        }
+
+        body.dark .table th {
+            color: var(--accent);
+            border-bottom-color: rgba(255,255,255,0.1) !important;
+        }
+
+        body.dark .table td {
+            color: var(--text);
+            border-bottom-color: rgba(255,255,255,0.06) !important;
+        }
+
+        body.dark .table tbody tr:hover > td {
+            background: rgba(255,255,255,0.05) !important;
+        }
+
+        body.dark .btn-delete {
+            border-color: rgba(224,112,112,0.3);
+            color: var(--danger);
+        }
+
+        body.dark .btn-icon {
+            border-color: rgba(255,255,255,0.15);
+            color: var(--text);
+        }
+
+        .btn-icon {
+            background: none;
+            border: 1px solid rgba(90,115,87,0.3);
+            border-radius: 20px;
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .btn-icon:hover {
+            background: rgba(61,92,58,0.08);
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+    <div id="app-toast" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- NAV -->
+<nav class="admin-nav">
+    <div class="nav-card">
+        <div style="display:flex; align-items:center;">
+            <span class="nav-logo">Summarium</span>
+            <span class="admin-badge">Admin</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button class="btn-icon" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark Mode">◑</button>
+            <button class="btn-logout" onclick="logout()">↩ Sign Out</button>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="admin-content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="glass-card stat-card">
+            <div class="stat-value" id="stat-users">—</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="glass-card stat-card">
+            <div class="stat-value" id="stat-books">—</div>
+            <div class="stat-label">Total Books</div>
+        </div>
+        <div class="glass-card stat-card">
+            <div class="stat-value" id="stat-summaries">—</div>
+            <div class="stat-label">Total Summaries</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+        <button class="admin-tab active" id="tab-users" onclick="showTab('users')">👤 Users</button>
+        <button class="admin-tab" id="tab-books" onclick="showTab('books')">📚 Books</button>
+        <button class="admin-tab" id="tab-bookstats" onclick="showTab('bookstats')">📊 Book Stats</button>
+    </div>
+
+    <!-- Users Table -->
+    <div id="panel-users" class="glass-card table-card">
+        <div class="section-heading">All Users</div>
+        <div id="users-list"></div>
+    </div>
+
+    <!-- Books Table -->
+    <div id="panel-books" class="glass-card table-card" style="display:none;">
+        <div class="section-heading">All Books</div>
+        <div id="books-list"></div>
+    </div>
+
+    <div id="panel-bookstats" class="glass-card table-card" style="display:none;">
+        <div class="section-heading">Book Summary Stats</div>
+        <div id="bookstats-list"></div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let token = localStorage.getItem("token") || "";
+
+    function showToast(message, type="primary") {
+        const toastEl = document.getElementById("app-toast");
+        const toastBody = document.getElementById("toast-message");
+        toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+        toastBody.innerText = message;
+        new bootstrap.Toast(toastEl).show();
+    }
+
+    function showTab(tab) {
+        document.getElementById("panel-users").style.display = tab === "users" ? "block" : "none";
+        document.getElementById("panel-books").style.display = tab === "books" ? "block" : "none";
+        document.getElementById("panel-bookstats").style.display = tab === "bookstats" ? "block" : "none";
+        document.getElementById("tab-users").classList.toggle("active", tab === "users");
+        document.getElementById("tab-books").classList.toggle("active", tab === "books");
+        document.getElementById("tab-bookstats").classList.toggle("active", tab === "bookstats");
+    }
+
+    async function loadStats() {
+        const res = await fetch("/admin/stats", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (!res.ok) { window.location.href = "/app"; return; }
+        const data = await res.json();
+        document.getElementById("stat-users").innerText = data.total_users;
+        document.getElementById("stat-books").innerText = data.total_books;
+        document.getElementById("stat-summaries").innerText = data.total_summaries;
+    }
+
+    function toggleDarkMode() {
+        const isDark = document.body.classList.toggle("dark");
+        localStorage.setItem("adminDarkMode", isDark ? "on" : "off");
+    }
+
+    async function loadUsers() {
+        const res = await fetch("/admin/users", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+
+        document.getElementById("users-list").innerHTML = `
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(u => `
+                        <tr>
+                            <td>${u.user_id}</td>
+                            <td>${u.name}</td>
+                            <td>${u.email}</td>
+                            <td><span class="role-badge ${u.role === 'admin' ? 'role-admin' : 'role-user'}">${u.role}</span></td>
+                            <td>
+                                ${u.role !== 'admin' ? `<button class="btn-delete" onclick="deleteUser(${u.user_id})">Delete</button>` : '—'}
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async function loadBooks() {
+        const res = await fetch("/admin/books", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+
+        document.getElementById("books-list").innerHTML = `
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Uploaded By (User ID)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(b => `
+                        <tr>
+                            <td>${b.book_id}</td>
+                            <td>${b.title}</td>
+                            <td>${b.author}</td>
+                            <td>${b.uploaded_by}</td>
+                            <td><button class="btn-delete" onclick="deleteBook(${b.book_id})">Delete</button></td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async function deleteUser(userId) {
+        if (!confirm("Delete this user? This cannot be undone.")) return;
+        const res = await fetch(`/admin/users/${userId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast("User deleted!", "success");
+            loadUsers();
+            loadStats();
+        } else {
+            showToast(data.detail, "danger");
+        }
+    }
+
+    async function deleteBook(bookId) {
+        if (!confirm("Delete this book and all its summaries? This cannot be undone.")) return;
+        const res = await fetch(`/admin/books/${bookId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast("Book deleted!", "success");
+            loadBooks();
+            loadStats();
+        } else {
+            showToast(data.detail, "danger");
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        window.location.href = "/app";
+    }
+
+    async function loadBookStats() {
+        const res = await fetch("/admin/book-stats", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+
+        document.getElementById("bookstats-list").innerHTML = `
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Total Summaries</th>
+                        <th>Summary Types</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(b => `
+                        <tr>
+                            <td>B${b.book_id}</td>
+                            <td>${b.title}</td>
+                            <td>${b.author}</td>
+                            <td>${b.total_summaries}</td>
+                            <td>${b.types.length > 0
+                                ? b.types.map(t => `<span style="display:inline-block; font-size:0.65rem; background:rgba(61,92,58,0.1); color:var(--accent); padding:2px 8px; border-radius:10px; margin:2px; text-transform:uppercase; letter-spacing:0.06em;">${t.replace("_", " · ")}</span>`).join("")
+                                : "<span style='color:var(--muted); font-size:0.8rem;'>None</span>"
+                            }</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Init
+    
+    window.addEventListener("DOMContentLoaded", async () => {
+        if (localStorage.getItem("adminDarkMode") === "on") {
+            document.body.classList.add("dark");
+        }
+
+        if (!token) {
+            window.location.href = "/app";
+            return;
+        }
+
+        try {
+            const res = await fetch("/admin/stats", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (res.status === 403) {
+                alert("Access denied. You are not an admin.");
+                window.location.href = "/app";
+                return;
+            }
+
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("userRole");
+                window.location.href = "/app";
+                return;
+            }
+
+            if (!res.ok) {
+                alert("Error: " + res.status);
+                return;
+            }
+
+            const stats = await res.json();
+            document.getElementById("stat-users").innerText = stats.total_users;
+            document.getElementById("stat-books").innerText = stats.total_books;
+            document.getElementById("stat-summaries").innerText = stats.total_summaries;
+
+            await loadUsers();
+            await loadBooks();
+            await loadBookStats();
+
+        } catch (err) {
+            alert("Error loading admin panel: " + err.message);
+        }
+    });
+</script>
+</body>
+</html>
