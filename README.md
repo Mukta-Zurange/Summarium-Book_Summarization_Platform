@@ -1,16 +1,18 @@
-# 📚 Summarium – AI-Powered Book Summarization Platform
+# 📚 Summarium – AI-Powered Book & Content Summarization Platform
 
-**Summarium** is an AI-powered web application that helps users quickly understand books and large textual documents by generating intelligent summaries using **Natural Language Processing (NLP)** and **Large Language Models (LLMs)**.
+**Summarium** is an AI-powered content summarization platform designed to help users quickly understand books, documents, text, and YouTube videos without reading or watching the entire source.
 
-The platform supports PDF files, TXT files, and direct text input. Users can generate summaries in different lengths and formats and use additional AI-powered learning features such as **mind maps, quizzes, and an AI chatbot**.
+The platform uses **Natural Language Processing (NLP)** and **Large Language Models (LLMs)** to extract important information, generate personalized summaries, identify key insights, and provide interactive learning tools such as mind maps, quizzes, and an AI chatbot.
 
 ---
 
 ## 🎯 Project Objective
 
-Reading lengthy books and documents can be time-consuming, especially when users need to quickly identify the important concepts and key ideas.
+Reading lengthy books, documents, research material, and watching long educational videos can be time-consuming when users only need the most important information.
 
-Summarium addresses this problem by automatically processing large amounts of text and generating meaningful summaries while preserving the important information. It also provides interactive features that help users understand and revise the content more effectively.
+Summarium solves this problem by processing large amounts of content and transforming it into concise, meaningful, and user-oriented summaries. Users can control the **summary format, length, and target audience/role**, making the generated content more relevant to their specific needs.
+
+The platform also provides **key insights, mind maps, quizzes, chatbot interaction, summary history, and PDF export**, making it useful for learning, research, revision, and professional information processing.
 
 ---
 
@@ -19,164 +21,297 @@ Summarium addresses this problem by automatically processing large amounts of te
 ### 🔐 User Authentication
 
 * User registration and login
+* Secure password handling
 * Password recovery using security questions
 * Role-based access control
-* Separate user and admin functionality
-
-### 📄 Multiple Input Methods
-
-Users can provide content through:
-
-* 📕 PDF upload
-* 📄 TXT file upload
-* 📝 Direct text input
-
-Each uploaded or submitted document is assigned a unique identifier for further processing.
-
-### 🤖 AI-Powered Summarization
-
-Summarium generates summaries based on user preferences.
-
-**Summary formats:**
-
-* Bullet points
-* Paragraph format
-
-**Summary lengths:**
-
-* Short
-* Medium
-* Detailed
-
-Additional functionality includes:
-
-* Summary regeneration
-* Summary history
-* Copy summary to clipboard
-* Download summary as PDF
-
-### 🧠 Mind Map Generation
-
-The platform extracts important concepts from the content and generates a visual representation of their relationships.
-
-Users can use mind maps to understand the structure and connections between important ideas in a document.
-
-### ❓ AI Quiz Generation
-
-Summarium can generate quizzes from the processed content.
-
-The quiz module provides:
-
-* AI-generated questions
-* Automatic answer evaluation
-* Score calculation
-* Identification of incorrect answers
-* Correct answer display
-
-### 💬 AI Chatbot
-
-Users can interact with the system using an AI-powered chatbot to ask questions and obtain assistance related to the processed content.
-
-### 📚 Book Repository
-
-Uploaded books and documents are stored in a centralized repository.
-
-The system provides:
-
-* Book ID tracking
-* Book title and author information
-* Search functionality
-* Duplicate upload prevention
-
-### 👨‍💼 Admin Dashboard
-
-Administrators can manage and monitor the platform, including:
-
-* Registered users
-* Uploaded books
-* Summary statistics
-* User management
-* Book management
+* Separate user and administrator functionality
 
 ---
 
-## 🔄 System Workflow
+### 📄 Multiple Content Input Methods
+
+Summarium supports multiple ways of providing content:
+
+* 📕 **PDF Upload**
+* 📄 **TXT File Upload**
+* 📝 **Direct Text Input**
+* ▶️ **YouTube Video Link**
+
+For YouTube videos, Summarium extracts the available transcript and converts it into processable text before sending it through the summarization pipeline.
+
+The platform validates YouTube URLs and handles cases such as unavailable or disabled transcripts.
+
+---
+
+## 🤖 AI-Powered Summarization
+
+Summarium uses an LLM-powered summarization pipeline to generate summaries from large amounts of content.
+
+Users can customize the generated summary according to their requirements.
+
+### Summary Formats
+
+* **Paragraph**
+* **Bullet Points**
+
+### Summary Lengths
+
+* **Short**
+* **Medium**
+* **Detailed**
+
+### Role-Based Summarization
+
+A major feature of Summarium is the ability to generate summaries specifically for different types of users.
+
+Available roles include:
+
+| Role           | Summary Focus                                                   |
+| -------------- | --------------------------------------------------------------- |
+| 🌐 General     | Balanced summary of the content                                 |
+| 🎓 Student     | Simple explanations and important concepts                      |
+| 💼 Executive   | Decisions, outcomes, business impact and actionable information |
+| 💻 Technical   | Technical details, methods and terminology                      |
+| 🔬 Researcher  | Methodology, findings, evidence and implications                |
+| ⚖️ Legal       | Rights, obligations, risks and legal implications               |
+| 🎨 Creative    | Engaging explanations, analogies and storytelling               |
+| 🩺 Medical     | Clinical details, treatments and outcomes                       |
+| 📊 Analyst     | Metrics, trends, patterns and data-driven conclusions           |
+| 👨‍🏫 Educator | Learning objectives and concepts useful for teaching            |
+
+The selected role is incorporated into the LLM prompt so that the final summary is adapted to the intended audience.
+
+---
+
+## 🔄 Summary Controls
+
+Summarium provides several controls to make the summarization experience more flexible:
+
+* ▶️ **Generate Summary** – Creates a new summary from the processed content
+* 🔄 **Regenerate** – Generates another version of the summary
+* ⏳ **History** – Access previously generated summaries
+* 📋 **Copy** – Copies the generated summary to the clipboard
+* 📥 **Download PDF** – Downloads the summary as a PDF document
+
+The system also stores summaries and chunk-level results in the MySQL database, allowing previously processed information to be reused efficiently.
+
+---
+
+## 💡 AI-Powered Key Insights
+
+Summarium can extract the most important takeaways from a generated summary using the **Key Insights** feature.
+
+The system:
+
+1. Takes the generated summary as input.
+2. Sends it to the LLM for analysis.
+3. Identifies the most important takeaways.
+4. Generates **five concise key insights**.
+5. Displays the insights separately for quick understanding.
+
+This allows users to understand the core message of lengthy content without reading the complete summary.
+
+---
+
+## 🧠 Mind Map Generation
+
+Summarium can convert summarized content into a structured visual mind map.
+
+The AI analyzes the content and determines the most suitable structure, such as:
+
+* General concepts
+* Step-by-step processes
+* Hierarchies and classifications
+* Comparisons
+* Cause-and-effect relationships
+* Timelines
+
+The generated structure contains a central topic, main concepts, and supporting details.
+
+This feature helps users visually understand relationships between important concepts.
+
+---
+
+## ❓ AI Quiz Generation
+
+Summarium can generate quizzes from processed content.
+
+The quiz system provides:
+
+* AI-generated questions
+* Multiple-choice options
+* Difficulty levels
+* Automatic answer evaluation
+* Score calculation
+* Identification of incorrect answers
+* Correct answer explanations
+
+This makes the platform useful for **self-assessment, exam preparation, and revision**.
+
+---
+
+## 💬 AI Chatbot
+
+Users can interact with an AI-powered chatbot to ask questions related to their processed content.
+
+The chatbot can:
+
+* Answer questions about the content
+* Explain concepts
+* Provide additional clarification
+* Maintain conversation history
+* Generate context-related responses
+
+This allows users to interact with their learning material rather than simply reading a static summary.
+
+---
+
+## 📚 Content & Summary History
+
+Summarium maintains a history of processed content and generated summaries.
+
+Users can revisit previously processed:
+
+* Books
+* Uploaded documents
+* Directly entered text
+* YouTube transcripts
+
+The history system stores information such as the content title, summary type, and creation date.
+
+---
+
+## 👨‍💼 Admin Dashboard
+
+Administrators have dedicated functionality for monitoring and managing the platform.
+
+The admin dashboard provides:
+
+* 👥 User management
+* 📚 Book management
+* 📊 Summary statistics
+* 🔎 Content monitoring
+* 🗑️ Book deletion
+* 📈 Summary information
+
+This provides centralized control over the application.
+
+---
+
+# 🔄 System Workflow
 
 ```text
-                User
-                  │
-                  ▼
-       PDF / TXT / Direct Text
-                  │
-                  ▼
-          Text Extraction
-                  │
-                  ▼
-        Text Preprocessing
-                  │
-                  ▼
-             Chunking
-                  │
-                  ▼
-       Chunk-level Summarization
-                  │
-                  ▼
-        Final Summary Generation
-                  │
-                  ▼
-            MySQL Database
-                  │
-        ┌─────────┼─────────┐
-        ▼         ▼         ▼
-     Mind Map    Quiz     AI Chatbot
+                         USER
+                           │
+                           ▼
+              ┌─────────────────────────┐
+              │     Content Input       │
+              ├─────────────────────────┤
+              │ PDF                     │
+              │ TXT                     │
+              │ Direct Text             │
+              │ YouTube Link            │
+              └────────────┬────────────┘
+                           │
+                           ▼
+                  Content Extraction
+                           │
+                           ▼
+                   Text Preprocessing
+                           │
+                           ▼
+                       Chunking
+                           │
+                           ▼
+                 Chunk Summarization
+                           │
+                           ▼
+              Role + Length + Format
+                     Customization
+                           │
+                           ▼
+                 Final AI Summary
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+        Key Insights    Mind Map       Quiz
+              │
+              ▼
+         AI Chatbot
+              │
+              ▼
+          MySQL Database
+              │
+              ▼
+      History / PDF / Copy
 ```
 
 ---
 
-## 🧠 NLP & Summarization Pipeline
+# 🧠 NLP & AI Summarization Pipeline
 
-Large documents cannot always be processed by an LLM in a single request because of context/token limitations. Therefore, Summarium follows a chunk-based processing approach.
+Large documents cannot always be processed by an LLM in a single request because of context and token limitations.
 
-### 1. Text Extraction
+Therefore, Summarium uses a **chunk-based summarization approach**.
 
-The application extracts textual content from uploaded PDF/TXT files or accepts text entered directly by the user.
+### 1. Content Extraction
+
+Content is extracted from:
+
+* PDF files
+* TXT files
+* Direct text
+* YouTube transcripts
+
+For YouTube content, the application extracts the video's transcript and converts it into text for further processing.
 
 ### 2. Text Preprocessing
 
-The extracted content is cleaned and normalized before being sent for summarization.
+The extracted text is cleaned and normalized before summarization.
 
 This includes:
 
-* Removing unwanted characters
-* Cleaning formatting
-* Normalizing text
-* Validating the extracted content
+* Removing unwanted formatting
+* Cleaning text
+* Normalizing content
+* Validating extracted information
 
 ### 3. Text Chunking
 
-Large documents are divided into smaller manageable chunks.
+Large documents are divided into smaller chunks.
 
-This allows the application to process lengthy documents without exceeding the context limitations of the language model.
+This prevents large inputs from exceeding the context limitations of the language model.
 
-### 4. Chunk Summarization
+### 4. Chunk-Level Summarization
 
-Each chunk is independently processed by the LLM to generate an intermediate summary.
+Each chunk is processed independently using the configured LLM.
+
+The resulting chunk summaries are stored and can be reused during later summary generation.
 
 ### 5. Final Summary Generation
 
-The intermediate summaries are combined and processed to produce a coherent final summary according to the user's selected length and format.
+The chunk summaries are combined and passed to the LLM again.
 
-### 6. Additional AI Features
+The final output is generated according to the user's:
 
-The processed content can then be used for:
+* Summary format
+* Summary length
+* Selected role
 
-* Mind-map generation
-* Quiz generation
-* AI chatbot interaction
+This allows the same source material to produce different summaries for different audiences.
+
+### 6. Additional AI Processing
+
+The final summary can then be used for:
+
+* 💡 Key insights
+* 🧠 Mind maps
+* ❓ Quizzes
+* 💬 AI chatbot interaction
 
 ---
 
-## 🏗️ Technology Stack
+# 🏗️ Technology Stack
 
 ### Frontend
 
@@ -194,23 +329,31 @@ The processed content can then be used for:
 
 * Natural Language Processing
 * Large Language Models
-* Ollama
 * Groq API
+* `openai/gpt-oss-20b`
 * Chunk-based summarization
+* Prompt-based role customization
 
 ### Database
 
 * MySQL
+* SQLAlchemy
 
-### Other Tools & Libraries
+### Content Processing
 
-* PDF/text extraction libraries
-* Python-based utility modules
-* Environment variables using `.env`
+* PDF/Text extraction
+* YouTube Transcript API
+* Text preprocessing
+* Custom chunking pipeline
+
+### Configuration
+
+* Python `.env`
+* Environment variables
 
 ---
 
-## 📁 Project Structure
+# 📁 Project Structure
 
 ```text
 Summarium-Book_Summarization_Platform/
@@ -218,34 +361,31 @@ Summarium-Book_Summarization_Platform/
 ├── static/
 │   ├── CSS
 │   ├── JavaScript
-│   └── other frontend assets
+│   └── Frontend assets
 │
 ├── templates/
 │   └── HTML templates
 │
 ├── app.py
-│   └── Main FastAPI application
+│   └── Main FastAPI application and API endpoints
 │
 ├── auth_utils.py
 │   └── Authentication and authorization utilities
 │
-├── chunking.py
-│   └── Text chunking logic
-│
 ├── database.py
-│   └── Database connection and operations
-│
-├── extractor.py
-│   └── Text extraction from uploaded content
+│   └── MySQL database connection and operations
 │
 ├── models.py
-│   └── Data models
+│   └── SQLAlchemy database models
+│
+├── extractor.py
+│   └── Content extraction logic
 │
 ├── preprocessing.py
 │   └── Text preprocessing and cleaning
 │
 ├── summarizer.py
-│   └── AI-based summarization logic
+│   └── AI summarization and LLM logic
 │
 ├── utils.py
 │   └── Supporting utility functions
@@ -256,42 +396,58 @@ Summarium-Book_Summarization_Platform/
 ├── requirements.txt
 │   └── Python dependencies
 │
-└── .env.example
-    └── Environment variable template
+├── .env.example
+│   └── Environment variable template
+│
+└── README.md
+    └── Project documentation
 ```
+
+The current repository contains the FastAPI application, authentication utilities, database layer, extraction/preprocessing modules, summarization logic, SQL dump, frontend assets, and environment configuration.
 
 ---
 
-## 🗄️ Database
+# 🗄️ Database
 
-The application uses **MySQL** for storing application and summarization data.
+Summarium uses **MySQL** to store application and summarization data.
 
-Major entities include:
+The database manages information related to:
 
 * Users
 * Books
-* Raw extracted text
+* Uploaded content
 * Pasted text
+* Extracted text
 * Chunk summaries
 * Final summaries
+* Summary history
+* Chat messages
 
-The database helps maintain user information, uploaded content, summary history, and other application data.
+The repository also includes a database dump:
+
+```text
+book_summarizer_dump.sql
+```
+
+The database allows the application to maintain user data, uploaded content, generated summaries, and historical results.
 
 ---
 
-## ⚙️ Installation
+# ⚙️ Installation & Setup
 
-### Prerequisites
+## Prerequisites
 
 Make sure the following are installed:
 
 * Python 3.10+
 * MySQL
-* Ollama
+* Git
 
-You will also need a **Groq API key** for the Groq-powered LLM functionality.
+You will also need a **Groq API key** for the LLM-powered features.
 
-### 1. Clone the Repository
+---
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Mukta-Zurange/Summarium-Book_Summarization_Platform.git
@@ -299,29 +455,37 @@ git clone https://github.com/Mukta-Zurange/Summarium-Book_Summarization_Platform
 cd Summarium-Book_Summarization_Platform
 ```
 
-### 2. Create a Virtual Environment
+---
 
-**Windows:**
+## 2. Create a Virtual Environment
+
+### Windows
 
 ```bash
 python -m venv venv
+
 venv\Scripts\activate
 ```
 
-**Linux / macOS:**
+### Linux / macOS
 
 ```bash
 python3 -m venv venv
+
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+---
+
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
+---
+
+## 4. Configure Environment Variables
 
 Create a `.env` file based on `.env.example`.
 
@@ -334,40 +498,33 @@ MYSQL_PASSWORD=your_password
 MYSQL_DATABASE=book_summarizer
 
 GROQ_API_KEY=your_groq_api_key
-OLLAMA_MODEL=llama3
 ```
 
-### 5. Configure the Database
+Do not commit your actual `.env` file or API keys to GitHub.
 
-Create the MySQL database:
+---
+
+## 5. Configure MySQL
+
+Create the database:
 
 ```sql
 CREATE DATABASE book_summarizer;
 ```
 
-Then import the provided SQL dump:
+Import the provided database dump:
 
 ```bash
 mysql -u root -p book_summarizer < book_summarizer_dump.sql
 ```
 
-### 6. Start Ollama
+If you are using a cloud MySQL provider, configure the corresponding host, username, password, database name, and port in `.env`.
 
-Run:
+---
 
-```bash
-ollama serve
-```
+## 6. Run the Application
 
-If required, download the configured model:
-
-```bash
-ollama pull llama3
-```
-
-### 7. Run the Application
-
-Start the FastAPI server:
+Start the FastAPI application:
 
 ```bash
 uvicorn app:app --reload
@@ -381,72 +538,112 @@ http://localhost:8000
 
 ---
 
-## 👤 Application Workflow
+# 👤 Application Workflow
 
-1. User registers or logs into the platform.
-2. User uploads a PDF/TXT file or enters text directly.
-3. The application extracts and preprocesses the content.
-4. Large content is divided into smaller chunks.
-5. Each chunk is processed using an LLM.
-6. The chunk summaries are combined into a final summary.
-7. The user selects the required summary length and format.
-8. The generated summary can be regenerated, copied, or downloaded.
-9. The processed content can also be used to generate:
+1. User registers or logs into Summarium.
+2. User selects a content input method.
+3. User uploads a PDF/TXT file, enters text, or provides a YouTube link.
+4. The application extracts the content.
+5. The text is cleaned and preprocessed.
+6. Large content is divided into manageable chunks.
+7. Chunk-level summaries are generated.
+8. The chunks are combined into a final summary.
+9. The user selects:
 
-   * Mind maps
-   * Quizzes
-   * AI chatbot responses
-10. Relevant information is stored in the MySQL database.
+   * Summary length
+   * Summary format
+   * Target role
+10. The final personalized summary is generated.
+11. The user can:
+
+* Regenerate the summary
+* View history
+* Copy the summary
+* Download it as PDF
+
+12. The user can generate **Key Insights**.
+13. The processed content can also be used for:
+
+* Mind maps
+* Quizzes
+* AI chatbot interaction
+
+14. Relevant application data is stored in MySQL.
 
 ---
 
-## 🎓 Use Cases
+# 🎓 Use Cases
 
 Summarium can be useful for:
 
-* Students studying lengthy textbooks
-* Researchers reviewing documents
-* Readers who want quick book insights
-* Professionals processing large documents
-* Revision and exam preparation
-* Learning through AI-generated quizzes and mind maps
+* 🎓 Students studying lengthy textbooks
+* 🔬 Researchers reviewing academic material
+* 📚 Readers who want quick book summaries
+* 💼 Professionals reviewing business documents
+* 👨‍💻 Technical professionals analyzing technical content
+* 👨‍🏫 Educators preparing teaching material
+* 📝 Exam and revision preparation
+* ▶️ Users who want quick insights from educational YouTube videos
+* 📊 Professionals who need concise, role-specific information
 
 ---
 
-## 🚀 Future Enhancements
+# 🚀 Future Enhancements
 
-Possible future improvements include:
+Potential future improvements include:
 
-* 🌐 Multi-language summarization
+* 🌐 Multilingual summarization
 * 🔎 RAG-based document retrieval
 * 📷 OCR support for scanned PDFs
 * 🎙️ Voice-based summarization
 * 📱 Mobile application
 * 📊 Personalized learning analytics
+* 🔗 Support for additional web content sources
+* 🧠 More advanced personalization and recommendation features
 
 ---
 
-## 👩‍💻 Developed As
-
-This project was developed as part of the **Infosys Springboard Virtual Internship**.
+# 🎓 Project Information
 
 **Project:** Intelligent NLP System for Automated Book Summaries with Key Concept Identification
 
+**Project Name:** Summarium
+
 **Domain:** Natural Language Processing / Generative AI
+
+**Developed As:** Infosys Springboard Virtual Internship Project
 
 ---
 
-## 📌 Project Highlights
+# 📌 Project Highlights
 
-* AI-powered document summarization
-* Chunk-based processing for lengthy documents
-* Multiple summary lengths and formats
-* PDF/TXT/direct text input
-* Mind-map generation
-* AI-generated quizzes
-* AI chatbot
-* User authentication and authorization
-* MySQL-based data management
-* Admin dashboard
-* FastAPI backend
-* Groq and Ollama LLM integration
+* 🤖 AI-powered content summarization
+* 📚 Book and document summarization
+* ▶️ YouTube transcript summarization
+* 🎯 Role-based personalized summaries
+* 📏 Multiple summary lengths
+* 📝 Paragraph and bullet-point formats
+* 🔄 Summary regeneration
+* ⏳ Summary history
+* 💡 AI-generated key insights
+* 📋 One-click summary copying
+* 📥 PDF summary download
+* 🧠 AI-generated mind maps
+* ❓ AI-generated quizzes
+* 💬 Context-aware AI chatbot
+* 🔐 User authentication and authorization
+* 👨‍💼 Admin dashboard
+* 🗄️ MySQL database
+* ⚡ FastAPI backend
+* 🧠 Groq LLM integration
+* ✂️ Chunk-based processing for large documents
+
+---
+
+## 🌟 Why Summarium?
+
+Summarium is more than a basic text summarizer.
+
+It combines **AI summarization, audience personalization, content extraction, learning tools, and persistent history** into a single platform. Instead of simply producing a shorter version of a document, it allows users to choose **how the information should be presented and for whom it should be optimized**.
+
+Whether the user is a student learning a new concept, a researcher reviewing a paper, an executive looking for business impact, or a professional analyzing technical material, Summarium adapts the generated summary to the user's needs.
