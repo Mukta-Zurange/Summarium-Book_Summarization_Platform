@@ -80,7 +80,7 @@ def summarize_text(full_text: str, format: str = "paragraph", length: str = "med
 
         def call_api(i, chunk):
             response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=[{
                     "role": "user",
                     "content": (
@@ -140,7 +140,7 @@ def summarize_text(full_text: str, format: str = "paragraph", length: str = "med
     while True:
         try:
             final = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=[{
                     "role": "user",
                     "content": (
@@ -185,7 +185,7 @@ def summarize_text(full_text: str, format: str = "paragraph", length: str = "med
 
 def generate_mindmap_data(summary_text: str) -> dict:
     response = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[{
             "role": "user",
             "content": (
@@ -262,7 +262,7 @@ def generate_quiz(summary_text: str) -> list:
     )
 
     response = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[{"role": "user", "content": prompt}]
     )
     raw = response.choices[0].message.content.strip()

@@ -3,3 +3,4 @@ __pycache__/
 .env
 book_summarizer_mysql55.sql
 book_summarizer_dump.sql
+raw_text_fixed.sql
