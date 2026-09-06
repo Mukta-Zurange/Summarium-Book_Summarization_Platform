@@ -14,7 +14,7 @@ from fastapi import BackgroundTasks
 from database import SessionLocal
 from fastapi import Request
 from sqlalchemy import func
-from models import Base, User, Book, RawText, Summary, PastedText, ChunkSummary
+from models import Base, User, Book, RawText, Summary, PastedText, ChunkSummary, PasswordReset, ChatMessage
 import shutil
 import os
 import os
@@ -317,6 +317,51 @@ def upload_pasted_text(
         "pasted_id": f"T{new_entry.pasted_id}"
     }
 
+@app.post("/upload-youtube")
+def upload_youtube(
+    url: str = Form(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from youtube_transcript_api import YouTubeTranscriptApi
+    from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+    import re
+
+    # Extract video ID from URL
+    video_id_match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
+    if not video_id_match:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+
+    video_id = video_id_match.group(1)
+
+    try:
+        ytt_api = YouTubeTranscriptApi()
+        fetched = ytt_api.fetch(video_id)
+        text = " ".join([entry.text for entry in fetched])
+    except TranscriptsDisabled:
+        raise HTTPException(status_code=400, detail="This video has captions disabled")
+    except NoTranscriptFound:
+        raise HTTPException(status_code=400, detail="No transcript found for this video")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not fetch transcript: {str(e)}")
+
+    if len(text.strip()) < 100:
+        raise HTTPException(status_code=400, detail="Transcript too short to summarize")
+
+    new_entry = PastedText(
+        content=text,
+        uploaded_by=current_user.user_id
+    )
+    db.add(new_entry)
+    db.commit()
+    db.refresh(new_entry)
+
+    return {
+        "message": "YouTube transcript extracted successfully",
+        "pasted_id": f"T{new_entry.pasted_id}",
+        "word_count": len(text.split())
+    }
+
 # ---------- GENERATE SUMMARY ----------
 @app.post("/generate-summary/{item_id}")
 def generate_summary(
@@ -325,6 +370,7 @@ def generate_summary(
     format: str = "paragraph",
     length: str = "medium",
     force: bool = False,
+    role: str = "general",
     db: Session = Depends(get_db)
 ):
     if item_id.upper().startswith("T"):
@@ -346,7 +392,7 @@ def generate_summary(
         text = raw.full_text
         pasted_ref = None
 
-    summary_type = f"{format}_{length}"
+    summary_type = f"{format}_{length}_{role}"
 
     # Check cache only if force=False
     if not force:
@@ -384,17 +430,10 @@ def generate_summary(
     db.refresh(new_summary)
     summary_id = new_summary.summary_id
 
-    def run_summary(summary_id, text, format, length, book_id, pasted_ref):
+    def run_summary(summary_id, text, format, length, book_id, pasted_ref, role="general"):
         from database import SessionLocal
         db2 = SessionLocal()
         try:
-            def update_progress(pct):
-                rec = db2.query(Summary).filter(Summary.summary_id == summary_id).first()
-                if rec:
-                    rec.progress = pct
-                    db2.commit()
-
-            # Check if chunk summaries already exist
             if book_id:
                 existing = db2.query(ChunkSummary).filter(
                     ChunkSummary.book_id == book_id
@@ -407,9 +446,9 @@ def generate_summary(
             if existing:
                 print(f"Reusing {len(existing)} saved chunk summaries")
                 existing_chunks = [c.chunk_summary for c in existing]
-                result, _ = summarize_text(text, format=format, length=length, progress_callback=update_progress, existing_chunks=existing_chunks)
+                result, _ = summarize_text(text, format=format, length=length, existing_chunks=existing_chunks, role=role)
             else:
-                result, chunk_summaries = summarize_text(text, format=format, length=length, progress_callback=update_progress)
+                result, chunk_summaries = summarize_text(text, format=format, length=length, role=role)
                 for i, cs in enumerate(chunk_summaries):
                     db2.add(ChunkSummary(
                         book_id=book_id,
@@ -427,7 +466,7 @@ def generate_summary(
         finally:
             db2.close()
 
-    background_tasks.add_task(run_summary, summary_id, text, format, length, book_id, pasted_ref)
+    background_tasks.add_task(run_summary, summary_id, text, format, length, book_id, pasted_ref, role)
     return {"status": "processing", "summary_id": summary_id}
 
 
@@ -555,6 +594,199 @@ def get_mindmap(item_id: str, db: Session = Depends(get_db)):
     return {"mindmap": mindmap}
 
 
+# ---------- ASK AI ----------
+@app.post("/ask/{item_id}")
+def ask_ai(
+    item_id: str,
+    question: str = Form(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if item_id.upper().startswith("T"):
+        pasted_id = int(item_id[1:])
+        entry = db.query(PastedText).filter(PastedText.pasted_id == pasted_id).first()
+        if not entry:
+            raise HTTPException(status_code=404, detail="Pasted text not found")
+        text = entry.content
+        book_id = None
+        pasted_ref = pasted_id
+    else:
+        book_id = int(item_id[1:]) if item_id.upper().startswith("B") else int(item_id)
+        raw = db.query(RawText).filter(RawText.book_id == book_id).first()
+        if not raw:
+            raise HTTPException(status_code=404, detail="No text found for this book")
+        text = raw.full_text
+        pasted_ref = None
+
+    if book_id:
+        history = db.query(ChatMessage).filter(
+            ChatMessage.book_id == book_id
+        ).order_by(ChatMessage.id.desc()).limit(6).all()
+    else:
+        history = db.query(ChatMessage).filter(
+            ChatMessage.pasted_id == pasted_ref
+        ).order_by(ChatMessage.id.desc()).limit(6).all()
+
+    history = list(reversed(history))
+    context = text[:6000] if len(text) > 6000 else text
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a helpful assistant that answers questions based ONLY on the document provided. "
+                "If the answer is not in the document, say 'I could not find that in the document.' "
+                "Be concise and accurate.\n\n"
+                f"Document:\n{context}"
+            )
+        }
+    ]
+
+    for msg in history:
+        messages.append({"role": msg.role, "content": msg.message})
+
+    messages.append({"role": "user", "content": question})
+
+    from summarizer import groq_client
+    import time
+    while True:
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=messages
+            )
+            break
+        except Exception as e:
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                time.sleep(10)
+            else:
+                raise HTTPException(status_code=500, detail=str(e))
+
+    answer = response.choices[0].message.content
+
+    db.add(ChatMessage(book_id=book_id, pasted_id=pasted_ref, role="user", message=question))
+    db.add(ChatMessage(book_id=book_id, pasted_id=pasted_ref, role="assistant", message=answer))
+    db.commit()
+
+    return {"answer": answer}
+
+
+@app.get("/chat-history/{item_id}")
+def get_chat_history(
+    item_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if item_id.upper().startswith("T"):
+        pasted_id = int(item_id[1:])
+        messages = db.query(ChatMessage).filter(
+            ChatMessage.pasted_id == pasted_id
+        ).order_by(ChatMessage.id.asc()).all()
+    else:
+        book_id = int(item_id[1:]) if item_id.upper().startswith("B") else int(item_id)
+        messages = db.query(ChatMessage).filter(
+            ChatMessage.book_id == book_id
+        ).order_by(ChatMessage.id.asc()).all()
+
+    return [
+        {"role": msg.role, "message": msg.message}
+        for msg in messages
+    ]
+
+@app.get("/chat-suggestions/{item_id}")
+def get_chat_suggestions(
+    item_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if item_id.upper().startswith("T"):
+        pasted_id = int(item_id[1:])
+        entry = db.query(PastedText).filter(PastedText.pasted_id == pasted_id).first()
+        if not entry:
+            raise HTTPException(status_code=404, detail="Text not found")
+        text = entry.content
+    else:
+        book_id = int(item_id[1:]) if item_id.upper().startswith("B") else int(item_id)
+        raw = db.query(RawText).filter(RawText.book_id == book_id).first()
+        if not raw:
+            raise HTTPException(status_code=404, detail="Book not found")
+        text = raw.full_text
+
+    context = text[:3000] if len(text) > 3000 else text
+
+    from summarizer import groq_client
+    import time
+    while True:
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        "Based on the following document, generate exactly 4 short interesting questions "
+                        "a reader might want to ask about it. "
+                        "Return ONLY a JSON array of 4 strings, no explanation, no markdown, no backticks.\n"
+                        'Example: ["What is the main topic?", "Who are the key people mentioned?", "What are the main conclusions?", "What methods were used?"]\n\n'
+                        f"Document:\n{context}"
+                    )
+                }]
+            )
+            break
+        except Exception as e:
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                time.sleep(10)
+            else:
+                raise HTTPException(status_code=500, detail=str(e))
+
+    import json
+    raw = response.choices[0].message.content.strip()
+    raw = raw.strip("```json").strip("```").strip()
+    try:
+        suggestions = json.loads(raw)
+        if not isinstance(suggestions, list):
+            suggestions = []
+    except:
+        suggestions = []
+
+    return {"suggestions": suggestions[:4]}
+
+
+@app.post("/explain")
+def explain_text(
+    sentence: str = Form(...),
+    mode: str = Form(default="explain"),
+    current_user: User = Depends(get_current_user)
+):
+    mode_prompts = {
+        "explain": "Explain the following sentence clearly and accurately in 2-3 sentences:",
+        "simplify": "Rewrite the following sentence in very simple plain language, no jargon:",
+        "example": "Give a concrete real-world example that illustrates the following sentence:",
+        "eli5": "Explain the following sentence like I am 10 years old, using very simple words:"
+    }
+
+    prompt = mode_prompts.get(mode, mode_prompts["explain"])
+
+    from summarizer import groq_client
+    import time
+    while True:
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{
+                    "role": "user",
+                    "content": f"{prompt}\n\n\"{sentence}\""
+                }]
+            )
+            break
+        except Exception as e:
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                time.sleep(10)
+            else:
+                raise HTTPException(status_code=500, detail=str(e))
+
+    return {"result": response.choices[0].message.content.strip()}
+
+
 # ---------- ADMIN ROUTES ----------
 @app.get("/admin/stats")
 def admin_stats(current_user: User = Depends(get_admin_user), db: Session = Depends(get_db)):
@@ -629,4 +861,111 @@ def admin_book_stats(current_user: User = Depends(get_admin_user), db: Session =
             "total_summaries": len(summaries),
             "types": list(set([s.summary_type for s in summaries if s.summary_type]))
         })
+    return result
+
+
+@app.get("/insights/{item_id}")
+def get_insights(
+    item_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if item_id.upper().startswith("T"):
+        pasted_id = int(item_id[1:])
+        summary = db.query(Summary).filter(
+            Summary.pasted_id == pasted_id,
+            Summary.summary_text != "processing"
+        ).order_by(Summary.summary_id.desc()).first()
+    else:
+        book_id = int(item_id[1:]) if item_id.upper().startswith("B") else int(item_id)
+        summary = db.query(Summary).filter(
+            Summary.book_id == book_id,
+            Summary.summary_text != "processing"
+        ).order_by(Summary.summary_id.desc()).first()
+
+    if not summary:
+        raise HTTPException(status_code=404, detail="No summary found. Generate a summary first.")
+
+    from summarizer import groq_client
+    import time, json
+
+    while True:
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        "Extract exactly 5 key insights from the following summary. "
+                        "Each insight must be a single concise sentence — the most important takeaway. "
+                        "Return ONLY a JSON array of 5 strings, no explanation, no markdown, no backticks.\n"
+                        'Example: ["Insight one.", "Insight two.", "Insight three.", "Insight four.", "Insight five."]\n\n'
+                        f"Summary:\n{summary.summary_text}"
+                    )
+                }]
+            )
+            break
+        except Exception as e:
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                time.sleep(10)
+            else:
+                raise HTTPException(status_code=500, detail=str(e))
+
+    raw = response.choices[0].message.content.strip()
+    raw = raw.strip("```json").strip("```").strip()
+
+    try:
+        insights = json.loads(raw)
+        if not isinstance(insights, list):
+            insights = []
+    except:
+        insights = []
+
+    return {"insights": insights[:5]}
+
+
+@app.get("/user-history")
+def get_user_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Get all books uploaded by user with their latest summary
+    books = db.query(Book).filter(Book.uploaded_by == current_user.user_id).all()
+    
+    result = []
+    for book in books:
+        latest_summary = db.query(Summary).filter(
+            Summary.book_id == book.book_id,
+            Summary.summary_text != "processing"
+        ).order_by(Summary.summary_id.desc()).first()
+        
+        if latest_summary:
+            result.append({
+                "id": f"B{book.book_id}",
+                "title": book.title,
+                "author": book.author,
+                "summary_type": latest_summary.summary_type or "general",
+                "created_at": latest_summary.created_at.strftime("%b %d, %Y") if latest_summary.created_at else ""
+            })
+    
+    # Also get pasted texts
+    pasted = db.query(PastedText).filter(PastedText.uploaded_by == current_user.user_id).all()
+    for entry in pasted:
+        latest_summary = db.query(Summary).filter(
+            Summary.pasted_id == entry.pasted_id,
+            Summary.summary_text != "processing"
+        ).order_by(Summary.summary_id.desc()).first()
+        
+        if latest_summary:
+            preview = entry.content[:40].strip() + "..." if len(entry.content) > 40 else entry.content
+            result.append({
+                "id": f"T{entry.pasted_id}",
+                "title": preview,
+                "author": "Pasted Text",
+                "summary_type": latest_summary.summary_type or "general",
+                "created_at": latest_summary.created_at.strftime("%b %d, %Y") if latest_summary.created_at else ""
+            })
+    
+    # Sort by most recent first
+    result.sort(key=lambda x: x["created_at"], reverse=True)
     return result

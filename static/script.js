@@ -15,6 +15,8 @@ function showLogin() {
     document.getElementById("forgot-form").style.display = "none";
     document.getElementById("login-tab").classList.add("active");
     document.getElementById("register-tab").classList.remove("active");
+    document.getElementById("ai-chat-wrap").style.display = "flex";
+
 }
 
 function showRegister() {
@@ -25,9 +27,11 @@ function showRegister() {
     document.getElementById("login-tab").classList.remove("active");
 }
 
+
 function switchInputType(type) {
     document.getElementById("file-upload-fields").style.display = type === "file" ? "block" : "none";
     document.getElementById("text-upload-fields").style.display = type === "text" ? "block" : "none";
+    document.getElementById("youtube-upload-fields").style.display = type === "youtube" ? "block" : "none";
     document.getElementById("upload-result").style.display = "none";
     document.getElementById("goto-summary-btn").style.display = "none";
 }
@@ -90,10 +94,13 @@ async function login() {
             window.location.href = "/admin";
         } else {
             document.getElementById("auth-section").style.display = "none";
-            document.getElementById("dashboard").style.display = "block";
+            document.getElementById("dashboard").style.display = "flex";
+            document.getElementById("ai-chat-wrap").style.display = "flex";
             showUpload();
             showToast("Login successful!", "success");
+            await loadSidebarHistory();
             await loadProfile();
+
         }
     } else {
         showToast(data.detail || "Login failed", "danger");
@@ -178,11 +185,8 @@ function showUpload() {
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
     document.getElementById("quiz-section").style.display = "none";
-    document.getElementById("nav-upload").classList.add("active");
-    document.getElementById("nav-summary").classList.remove("active");
-    document.getElementById("nav-books").classList.remove("active");
-    document.getElementById("nav-mindmap").classList.remove("active");
-    document.getElementById("nav-quiz").classList.remove("active");
+    document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("snav-upload").classList.add("active");
 }
 
 function showSummary() {
@@ -191,11 +195,8 @@ function showSummary() {
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
     document.getElementById("quiz-section").style.display = "none";
-    document.getElementById("nav-summary").classList.add("active");
-    document.getElementById("nav-upload").classList.remove("active");
-    document.getElementById("nav-books").classList.remove("active");
-    document.getElementById("nav-mindmap").classList.remove("active");
-    document.getElementById("nav-quiz").classList.remove("active");
+    document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("snav-summary").classList.add("active");
 }
 
 function showBooks() {
@@ -204,11 +205,8 @@ function showBooks() {
     document.getElementById("books-section").style.display = "block";
     document.getElementById("mindmap-section").style.display = "none";
     document.getElementById("quiz-section").style.display = "none";
-    document.getElementById("nav-books").classList.add("active");
-    document.getElementById("nav-upload").classList.remove("active");
-    document.getElementById("nav-summary").classList.remove("active");
-    document.getElementById("nav-mindmap").classList.remove("active");
-    document.getElementById("nav-quiz").classList.remove("active");
+    document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("snav-books").classList.add("active");
     loadBooks();
 }
 
@@ -218,11 +216,8 @@ function showMindMap() {
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "block";
     document.getElementById("quiz-section").style.display = "none";
-    document.getElementById("nav-mindmap").classList.add("active");
-    document.getElementById("nav-upload").classList.remove("active");
-    document.getElementById("nav-summary").classList.remove("active");
-    document.getElementById("nav-books").classList.remove("active");
-    document.getElementById("nav-quiz").classList.remove("active");
+    document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("snav-mindmap").classList.add("active");
 }
 
 function showQuiz() {
@@ -231,11 +226,13 @@ function showQuiz() {
     document.getElementById("books-section").style.display = "none";
     document.getElementById("mindmap-section").style.display = "none";
     document.getElementById("quiz-section").style.display = "block";
-    document.getElementById("nav-quiz").classList.add("active");
-    document.getElementById("nav-upload").classList.remove("active");
-    document.getElementById("nav-summary").classList.remove("active");
-    document.getElementById("nav-books").classList.remove("active");
-    document.getElementById("nav-mindmap").classList.remove("active");
+    document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("snav-quiz").classList.add("active");
+}
+
+function toggleSidebarProfile() {
+    const dropdown = document.getElementById("sidebar-profile-dropdown");
+    dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
 }
 
 function goToSummary() {
@@ -320,7 +317,7 @@ async function uploadBook() {
             body: formData
         });
 
-    } else {
+    } else if (inputType === "text") {
         const text = document.getElementById("pasted-text").value.trim();
         if (!text) {
             showToast("Please paste some text", "danger");
@@ -335,6 +332,23 @@ async function uploadBook() {
             headers: { "Authorization": "Bearer " + token },
             body: formData
         });
+
+    } else if (inputType === "youtube") {
+        const url = document.getElementById("youtube-url").value.trim();
+        if (!url) {
+            showToast("Please enter a YouTube URL", "danger");
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "Upload";
+            return;
+        }
+        uploadBtn.innerText = "Fetching transcript...";
+        const formData = new FormData();
+        formData.append("url", url);
+        response = await fetch("/upload-youtube", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token },
+            body: formData
+        });
     }
 
     const data = await response.json();
@@ -343,12 +357,15 @@ async function uploadBook() {
 
     if (response.ok) {
         const id = inputType === "file" ? `B${data.book_id}` : data.pasted_id;
-        document.getElementById("uploaded-id").innerText = id;
+        const extra = data.word_count ? ` (${data.word_count} words extracted)` : "";
+        document.getElementById("uploaded-id").innerText = id + extra;
         document.getElementById("upload-result").style.display = "block";
         document.getElementById("book_id").value = id;
         document.getElementById("mindmap-book-id").value = id;
         document.getElementById("quiz-book-id").value = id;
+        document.getElementById("askai-book-id").value = id;
         document.getElementById("goto-summary-btn").style.display = "inline-block";
+        await loadSidebarHistory();
     } else {
         showToast(data.detail || "Upload failed", "danger");
     }
@@ -396,12 +413,14 @@ async function generateSummary(force = false) {
 
     box.style.display = "block";
     historyBox.style.display = "none";
+    document.getElementById("insights-box").style.display = "none";
     btn.disabled = true;
     btn.innerText = "Processing...";
     regenBtn.style.display = "none";
     historyBtn.style.display = "none";
     copyBtn.style.display = "none";
     downloadBtn.style.display = "none";
+    document.getElementById("insights-btn").style.display = "none";
 
     text.innerHTML = `<div style="font-size:0.875rem; color:#5a7357;" id="progress-label">Starting...</div>`;
 
@@ -410,13 +429,14 @@ async function generateSummary(force = false) {
         activeInterval = null;
     }
 
-    const kickoff = await fetch(`/generate-summary/${bookId}?format=${format}&length=${length}&force=${force}`, {
+    const role = getToggleValue("role-summary-toggle");
+    const kickoff = await fetch(`/generate-summary/${bookId}?format=${format}&length=${length}&force=${force}&role=${role}`, {
         method: "POST"
     });
     const kickoffData = await kickoff.json();
 
     if (kickoffData.status === "done") {
-        text.innerText = kickoffData.summary;
+        renderSummaryWithExplain(text, kickoffData.summary);
         if (kickoffData.cached) showToast("Loaded from cache!", "success");
         else showToast("Summary ready!", "success");
         btn.disabled = false;
@@ -425,6 +445,7 @@ async function generateSummary(force = false) {
         historyBtn.style.display = "inline-block";
         copyBtn.style.display = "inline-block";
         downloadBtn.style.display = "inline-block";
+        document.getElementById("insights-btn").style.display = "inline-block";
         return;
     }
 
@@ -450,13 +471,14 @@ async function generateSummary(force = false) {
         if (data.status === "done") {
             clearInterval(activeInterval);
             activeInterval = null;
-            text.innerText = data.summary;
+            renderSummaryWithExplain(text, data.summary);
             btn.disabled = false;
             btn.innerText = "Generate Summary";
             regenBtn.style.display = "inline-block";
             historyBtn.style.display = "inline-block";
             copyBtn.style.display = "inline-block";
             downloadBtn.style.display = "inline-block";
+            document.getElementById("insights-btn").style.display = "inline-block";
             showToast("Summary ready!", "success");
         } else {
             const pct = data.progress || 0;
@@ -824,6 +846,18 @@ async function startQuiz() {
     showToast("Quiz ready!", "success");
 }
 
+function getDifficultyColor(difficulty) {
+    if (difficulty === "easy") return "#2d5a2d";
+    if (difficulty === "medium") return "#7a5a10";
+    return "#7a2a25";
+}
+
+function getDifficultyBg(difficulty) {
+    if (difficulty === "easy") return "rgba(90,150,90,0.15)";
+    if (difficulty === "medium") return "rgba(180,140,60,0.15)";
+    return "rgba(192,98,90,0.15)";
+}
+
 function renderQuestion() {
     const q = quizData[currentQuestion];
     const total = quizData.length;
@@ -831,7 +865,12 @@ function renderQuestion() {
     document.getElementById("quiz-progress").innerText = `Question ${currentQuestion + 1} of ${total}`;
     document.getElementById("quiz-question").innerText = q.question;
     document.getElementById("quiz-feedback").style.display = "none";
+    document.getElementById("quiz-explanation").style.display = "none";
     document.getElementById("quiz-next-btn").style.display = "none";
+
+    // Difficulty badge
+    const badge = document.getElementById("quiz-difficulty-badge");
+    badge.innerHTML = `<span class="difficulty-badge difficulty-${q.difficulty}">${q.difficulty}</span>`;
 
     const optionsEl = document.getElementById("quiz-options");
     optionsEl.innerHTML = "";
@@ -850,6 +889,7 @@ function selectAnswer(selected, btnEl) {
     const correct = q.answer;
     const allOptions = document.querySelectorAll(".quiz-option");
     const feedback = document.getElementById("quiz-feedback");
+    const explanation = document.getElementById("quiz-explanation");
     const nextBtn = document.getElementById("quiz-next-btn");
 
     allOptions.forEach(b => b.classList.add("disabled"));
@@ -863,15 +903,27 @@ function selectAnswer(selected, btnEl) {
     const isCorrect = selected === correct;
     if (isCorrect) score++;
 
-    userAnswers.push({ question: q.question, selected, correct, options: q.options, isCorrect });
+    userAnswers.push({
+        question: q.question,
+        selected,
+        correct,
+        options: q.options,
+        isCorrect,
+        difficulty: q.difficulty,
+        explanation: q.explanation || ""
+    });
 
     feedback.style.display = "block";
     feedback.style.background = isCorrect ? "rgba(90,150,90,0.15)" : "rgba(192,98,90,0.12)";
     feedback.style.color = isCorrect ? "#2d5a2d" : "#7a2a25";
     feedback.style.border = `1px solid ${isCorrect ? "#5a9a5a" : "#c0625a"}`;
-    feedback.innerText = isCorrect
-        ? "✓ Correct!"
-        : `✗ Wrong! The correct answer is ${correct}. ${q.options[correct]}`;
+    feedback.innerText = isCorrect ? "✓ Correct!" : `✗ Wrong! The correct answer is ${correct}. ${q.options[correct]}`;
+
+    // Show explanation
+    if (q.explanation) {
+        explanation.style.display = "block";
+        explanation.innerText = `💡 ${q.explanation}`;
+    }
 
     if (currentQuestion < quizData.length - 1) {
         nextBtn.style.display = "inline-block";
@@ -907,22 +959,316 @@ function showResults() {
 
     document.getElementById("quiz-score-msg").innerText = msg;
 
+    // Score by difficulty
+    const easyAnswers = userAnswers.filter(a => a.difficulty === "easy");
+    const mediumAnswers = userAnswers.filter(a => a.difficulty === "medium");
+    const hardAnswers = userAnswers.filter(a => a.difficulty === "hard");
+
+    const easyScore = easyAnswers.filter(a => a.isCorrect).length;
+    const mediumScore = mediumAnswers.filter(a => a.isCorrect).length;
+    const hardScore = hardAnswers.filter(a => a.isCorrect).length;
+
+    document.getElementById("quiz-difficulty-scores").innerHTML = `
+        <div class="difficulty-score-card">
+            <div class="difficulty-score-value difficulty-easy">${easyScore}/${easyAnswers.length}</div>
+            <div class="difficulty-score-label">Easy</div>
+        </div>
+        <div class="difficulty-score-card">
+            <div class="difficulty-score-value difficulty-medium">${mediumScore}/${mediumAnswers.length}</div>
+            <div class="difficulty-score-label">Medium</div>
+        </div>
+        <div class="difficulty-score-card">
+            <div class="difficulty-score-value difficulty-hard">${hardScore}/${hardAnswers.length}</div>
+            <div class="difficulty-score-label">Hard</div>
+        </div>
+    `;
+
+    // Review
     const reviewEl = document.getElementById("quiz-review");
     reviewEl.innerHTML = userAnswers.map((a, i) => `
         <div class="review-item">
-            <div class="review-question">Q${i + 1}. ${a.question}</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <div class="review-question">Q${i + 1}. ${a.question}</div>
+                <span class="difficulty-badge difficulty-${a.difficulty}" style="flex-shrink:0;">${a.difficulty}</span>
+            </div>
             <div class="review-answer ${a.isCorrect ? "correct" : "wrong"}">
                 Your answer: ${a.selected}. ${a.options[a.selected]}
                 ${!a.isCorrect ? `<br>Correct answer: ${a.correct}. ${a.options[a.correct]}` : ""}
             </div>
+            ${a.explanation ? `<div style="font-size:0.78rem; color:var(--muted); margin-top:6px; font-style:italic;">💡 ${a.explanation}</div>` : ""}
         </div>
     `).join("");
+}
+
+function toggleAIChat() {
+    const popup = document.getElementById("ai-chat-popup");
+    const isOpen = popup.style.display !== "none";
+    if (isOpen) {
+        popup.style.display = "none";
+    } else {
+        popup.style.display = "flex";
+        popup.style.flexDirection = "column";
+    }
+}
+
+function appendMessage(role, message) {
+    const chatEl = document.getElementById("chat-messages");
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${role}`;
+    bubble.innerText = message;
+    chatEl.appendChild(bubble);
+    chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+async function sendMessage() {
+    const bookId = document.getElementById("askai-book-id").value.trim();
+    const input = document.getElementById("chat-input");
+    const question = input.value.trim();
+    const btn = document.getElementById("chat-send-btn");
+
+    if (!question) return;
+    if (!bookId) {
+        showToast("Please enter a Book ID in the chat", "danger");
+        return;
+    }
+
+    appendMessage("user", question);
+    input.value = "";
+    btn.disabled = true;
+
+    const chatEl = document.getElementById("chat-messages");
+    const thinking = document.createElement("div");
+    thinking.className = "chat-bubble thinking";
+    thinking.id = "thinking-bubble";
+    thinking.innerText = "Thinking...";
+    chatEl.appendChild(thinking);
+    chatEl.scrollTop = chatEl.scrollHeight;
+
+    const formData = new FormData();
+    formData.append("question", question);
+
+    const res = await fetch(`/ask/${bookId}`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token },
+        body: formData
+    });
+    const data = await res.json();
+
+    document.getElementById("thinking-bubble")?.remove();
+    btn.disabled = false;
+
+    if (res.ok) {
+        appendMessage("assistant", data.answer);
+    } else {
+        showToast(data.detail || "Failed to get answer", "danger");
+    }
+}
+
+async function loadSuggestions() {
+    const bookId = document.getElementById("askai-book-id").value.trim();
+    if (!bookId) return;
+
+    const suggestionsEl = document.getElementById("chat-suggestions");
+    suggestionsEl.style.display = "flex";
+    suggestionsEl.innerHTML = `<span style="font-size:0.75rem; color:var(--muted); font-style:italic;">Loading suggestions...</span>`;
+
+    const res = await fetch(`/chat-suggestions/${bookId}`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.suggestions || data.suggestions.length === 0) {
+        suggestionsEl.style.display = "none";
+        return;
+    }
+
+    // Clear first message hint
+    const chatEl = document.getElementById("chat-messages");
+    chatEl.innerHTML = "";
+
+    suggestionsEl.innerHTML = data.suggestions.map(q => `
+        <span class="suggestion-chip" onclick="useSuggestion('${q.replace(/'/g, "\\'")}')" style="display:inline-block; font-size:0.68rem; background:rgba(61,92,58,0.1); color:var(--accent); padding:3px 10px; border-radius:10px; margin:2px; cursor:pointer; border:1px solid rgba(61,92,58,0.2); transition:all 0.2s;">${q}</span>
+    `).join("");
+}
+
+function useSuggestion(question) {
+    document.getElementById("chat-input").value = question;
+    document.getElementById("chat-input").focus();
+}
+
+function renderSummaryWithExplain(container, summaryText) {
+    // Split into sentences
+    const sentences = summaryText.match(/[^.!?\n]+[.!?\n]*/g) || [summaryText];
+    container.innerHTML = sentences.map(s => {
+        const escaped = s.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<span class="summary-sentence" onclick="openExplainPopup(event, '${escaped}')">${s}</span>`;
+    }).join("");
+}
+
+let currentExplainSentence = "";
+let currentExplainMode = "explain";
+
+async function openExplainPopup(event, sentence) {
+    currentExplainSentence = sentence;
+    currentExplainMode = "explain";
+
+    const popup = document.getElementById("explain-popup");
+    const preview = document.getElementById("explain-sentence-preview");
+    const body = document.getElementById("explain-popup-body");
+
+    // Apply dark mode if active
+    if (document.body.classList.contains("dark")) {
+        popup.style.background = "rgba(28,42,26,0.97)";
+        popup.style.borderColor = "rgba(255,255,255,0.08)";
+        body.style.color = "#e8f0e6";
+    } else {
+        popup.style.background = "rgba(255,255,255,0.95)";
+        popup.style.borderColor = "rgba(90,115,87,0.2)";
+        body.style.color = "#1e2d1c";
+    }
+    // Add this inside openExplainPopup after the dark mode check:
+    if (document.body.classList.contains("dark")) {
+        popup.style.background = "rgba(28,42,26,0.97)";
+        popup.style.borderColor = "rgba(255,255,255,0.08)";
+        body.style.color = "#e8f0e6";
+        // Fix header background
+        popup.querySelector("div").style.background = "rgba(255,255,255,0.04)";
+        popup.querySelector("#explain-sentence-preview").style.color = "#7a9b77";
+        popup.querySelector("div > div:first-child").style.color = "#7db87a";
+        // Fix buttons
+        document.querySelectorAll(".explain-mode-tab").forEach(t => {
+            t.style.background = "rgba(255,255,255,0.06)";
+            t.style.color = "#7a9b77";
+            t.style.borderColor = "rgba(255,255,255,0.1)";
+        });
+    } else {
+        popup.style.background = "rgba(255,255,255,0.95)";
+        popup.style.borderColor = "rgba(90,115,87,0.2)";
+        body.style.color = "#1e2d1c";
+        popup.querySelector("div").style.background = "rgba(61,92,58,0.05)";
+        popup.querySelector("#explain-sentence-preview").style.color = "#5a7357";
+    }
+
+    // Reset tabs
+    document.querySelectorAll(".explain-mode-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".explain-mode-tab")[0].classList.add("active");
+
+    // Position popup near click
+    const x = Math.min(event.clientX, window.innerWidth - 360);
+    const y = Math.min(event.clientY + 10, window.innerHeight - 320);
+    popup.style.left = x + "px";
+    popup.style.top = y + "px";
+    popup.style.display = "block";
+
+    preview.innerText = sentence.length > 80 ? sentence.substring(0, 80) + "..." : sentence;
+    body.innerHTML = `<span style="color:#5a7357; font-style:italic;">Loading...</span>`;
+
+    await fetchExplain(sentence, "explain");
+}
+
+async function switchExplainMode(mode, btn) {
+    currentExplainMode = mode;
+    document.querySelectorAll(".explain-mode-tab").forEach(t => {
+        t.style.background = "rgba(61,92,58,0.06)";
+        t.style.color = "#5a7357";
+        t.style.fontWeight = "500";
+        t.style.borderColor = "rgba(61,92,58,0.15)";
+    });
+    btn.style.background = "rgba(61,92,58,0.1)";
+    btn.style.color = "#3d5c3a";
+    btn.style.fontWeight = "600";
+    btn.style.borderColor = "rgba(61,92,58,0.2)";
+
+    const body = document.getElementById("explain-popup-body");
+    body.innerHTML = `<span style="color:#5a7357; font-style:italic;">Loading...</span>`;
+
+    await fetchExplain(currentExplainSentence, mode);
+}
+
+async function fetchExplain(sentence, mode) {
+    const body = document.getElementById("explain-popup-body");
+
+    const formData = new FormData();
+    formData.append("sentence", sentence);
+    formData.append("mode", mode);
+
+    const res = await fetch("/explain", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token },
+        body: formData
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+        body.innerText = data.result;
+    } else {
+        body.innerText = "Could not load explanation.";
+    }
+}
+
+function closeExplainPopup() {
+    document.getElementById("explain-popup").style.display = "none";
+}
+
+// Close popup when clicking outside
+document.addEventListener("click", (e) => {
+    const popup = document.getElementById("explain-popup");
+    if (popup && !popup.contains(e.target) && !e.target.classList.contains("summary-sentence")) {
+        popup.style.display = "none";
+    }
+});
+
+async function toggleInsights() {
+    const bookId = document.getElementById("book_id").value;
+    if (!bookId) return;
+
+    const box = document.getElementById("insights-box");
+
+    if (box.style.display === "block") {
+        box.style.display = "none";
+        return;
+    }
+
+    const list = document.getElementById("insights-list");
+    list.innerHTML = `<div style="font-size:0.85rem; color:var(--muted); font-style:italic;">Generating insights...</div>`;
+    box.style.display = "block";
+
+    const res = await fetch(`/insights/${bookId}`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+        list.innerHTML = `<div style="color:var(--danger); font-size:0.85rem;">${data.detail}</div>`;
+        return;
+    }
+
+    list.innerHTML = data.insights.map((insight, i) => `
+        <div class="insight-item">
+            <div class="insight-number">${i + 1}</div>
+            <div class="insight-text">${insight}</div>
+        </div>
+    `).join("");
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    sidebar.classList.add("open");
+    overlay.style.display = "block";
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    sidebar.classList.remove("open");
+    overlay.style.display = "none";
 }
 
 function toggleDarkMode() {
     const isDark = document.body.classList.toggle("dark");
     localStorage.setItem("darkMode", isDark ? "on" : "off");
-    document.getElementById("dark-mode-btn").innerText = isDark ? "◑" : "◐";
+    document.getElementById("dark-mode-btn").innerText = isDark ? "◑ Light Mode" : "◐ Dark Mode";
 }
 
 async function loadProfile() {
@@ -1002,6 +1348,12 @@ document.addEventListener("click", (e) => {
 });
 
 function logout() {
+    document.getElementById("ai-chat-wrap").style.display = "none";
+    document.getElementById("ai-chat-popup").style.display = "none";
+    
+    const overlay = document.getElementById("sidebar-overlay");
+    if (overlay) overlay.style.display = "none";  // guard against missing element
+    
     localStorage.clear();
     window.location.href = "/app";
 }
@@ -1020,9 +1372,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         if (res.ok) {
             document.getElementById("auth-section").style.display = "none";
-            document.getElementById("dashboard").style.display = "block";
+            document.getElementById("dashboard").style.display = "flex";
+            document.getElementById("ai-chat-wrap").style.display = "flex";
             showUpload();
             await loadProfile();
+            await loadSidebarHistory();
         } else {
             token = "";
             localStorage.removeItem("token");
@@ -1030,3 +1384,71 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     }
 });
+
+async function loadSidebarHistory() {
+    const res = await fetch("/user-history", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const list = document.getElementById("sidebar-history-list");
+
+    if (data.length === 0) {
+        list.innerHTML = `<div style="font-size:0.78rem; color:var(--muted); padding:8px 16px; font-style:italic;">No history yet.</div>`;
+        return;
+    }
+
+    list.innerHTML = data.map(item => `
+        <button class="sidebar-history-item" onclick="openFromHistory('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+            <div class="sidebar-history-title">${item.title}</div>
+            <div class="sidebar-history-meta">
+                <span>${item.id}</span>
+                <span>·</span>
+                <span>${item.created_at}</span>
+            </div>
+        </button>
+    `).join(`<div class="sidebar-history-divider"></div>`);
+}
+
+async function openFromHistory(id, title) {
+    // Fill in the ID fields
+    document.getElementById("book_id").value = id;
+    document.getElementById("mindmap-book-id").value = id;
+    document.getElementById("quiz-book-id").value = id;
+    document.getElementById("askai-book-id").value = id;
+
+    // Highlight active history item
+    document.querySelectorAll(".sidebar-history-item").forEach(i => i.classList.remove("active"));
+    event.currentTarget.classList.add("active");
+
+    // Navigate to summary section
+    showSummary();
+
+    // Auto load the summary
+    const box = document.getElementById("summary-box");
+    const text = document.getElementById("summary-text");
+    const regenBtn = document.getElementById("regenerate-btn");
+    const historyBtn = document.getElementById("history-btn");
+    const copyBtn = document.getElementById("copy-btn");
+    const downloadBtn = document.getElementById("download-btn");
+    const insightsBtn = document.getElementById("insights-btn");
+
+    box.style.display = "block";
+    text.innerHTML = `<div style="font-size:0.875rem; color:#5a7357;">Loading summary...</div>`;
+
+    // Fetch latest summary directly from status endpoint
+    const res = await fetch(`/summary-status/${id}`);
+    const data = await res.json();
+
+    if (data.status === "done") {
+        renderSummaryWithExplain(text, data.summary);
+        regenBtn.style.display = "inline-block";
+        historyBtn.style.display = "inline-block";
+        copyBtn.style.display = "inline-block";
+        downloadBtn.style.display = "inline-block";
+        insightsBtn.style.display = "inline-block";
+    } else {
+        text.innerText = "No summary found for this item. Please generate one first.";
+    }
+}

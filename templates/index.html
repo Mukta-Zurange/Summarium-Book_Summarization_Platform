@@ -29,6 +29,7 @@
 
     <div class="floating-card auth-card">
         <div class="card-logo">
+            <img src="/static/Summarium_logof.png" height="46" style="display:block;">
             <span class="logo-name">Summarium</span>
         </div>
         <p class="card-tagline">The Art of Intelligent Condensation.</p>
@@ -43,8 +44,8 @@
             <div class="field mb-3">
                 <label>Login As</label>
                 <div class="toggle-group" id="role-toggle">
-                    <button class="toggle-btn active" data-value="user" onclick="setToggle('role-toggle', this)">👤 User</button>
-                    <button class="toggle-btn" data-value="admin" onclick="setToggle('role-toggle', this)">🛡 Admin</button>
+                    <button class="toggle-btn active" data-value="user" onclick="setToggle('role-toggle', this)"> User</button>
+                    <button class="toggle-btn" data-value="admin" onclick="setToggle('role-toggle', this)"> Admin</button>
                 </div>
             </div>
             <div class="field mb-3">
@@ -67,7 +68,6 @@
                 <button onclick="showLoginFromForgot()" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:1.2rem;">←</button>
                 <span style="font-size:0.9rem; font-weight:600; color:var(--text);">Reset Password</span>
             </div>
-
             <div id="forgot-step-1">
                 <div class="field mb-3">
                     <label>Email</label>
@@ -75,7 +75,6 @@
                 </div>
                 <button class="btn-main w-100" onclick="fetchSecurityQuestion()">Continue</button>
             </div>
-
             <div id="forgot-step-2" style="display:none;">
                 <div class="field mb-3">
                     <label>Security Question</label>
@@ -127,44 +126,82 @@
             </div>
             <button class="btn-main w-100" onclick="register()">Create Account</button>
         </div>
-
     </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
-    <div class="page-wrapper">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+<div id="dashboard" style="display:none;" class="dashboard-layout">
 
-        <!-- Floating Top Nav -->
-        <div class="topnav-wrap">
-            <div class="topnav floating-card">
-                <div class="card-logo">
-                    <span class="logo-name">Summarium</span>
-                </div>
-                <div class="topnav-links">
-                    <button class="nav-pill active" id="nav-upload" onclick="showUpload()">⬆ Upload</button>
-                    <button class="nav-pill" id="nav-books" onclick="showBooks()">🕮 Uploaded Books</button>
-                    <button class="nav-pill" id="nav-summary" onclick="showSummary()">✦ Summarize</button>
-                    <button class="nav-pill" id="nav-mindmap" onclick="showMindMap()">☁️ Mind Map</button>
-                    <button class="nav-pill" id="nav-quiz" onclick="showQuiz()">🧠 Quiz</button>
-                </div>
-                <button class="btn-icon" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark Mode">◑</button>
-                <div class="profile-wrap" id="profile-wrap">
-                    <button class="profile-btn" onclick="toggleProfile()">👤</button>
-                    <div class="profile-dropdown" id="profile-dropdown" style="display:none;">
-                        <div class="profile-name" id="profile-name">—</div>
-                        <div class="profile-email" id="profile-email">—</div>
-                        <hr class="profile-divider">
-                        <button class="profile-signout" onclick="logout()">↩ Sign Out</button>
-                    </div>
-                </div>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo-section">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <img src="/static/Summarium_logof.png" height="30" style="display:block;">
+                <span class="sidebar-logo">Summarium</span>
             </div>
+            <p class="sidebar-tagline">The Art of Intelligent Condensation.</p>
         </div>
 
-        <!-- Dashboard Content -->
+        <!-- Nav -->
+        <nav class="sidebar-nav">
+            <button class="sidebar-nav-item active" id="snav-upload" onclick="showUpload()">
+                <span class="sidebar-nav-icon">⬆</span>
+                <span class="sidebar-nav-label">Upload</span>
+            </button>
+            <button class="sidebar-nav-item" id="snav-books" onclick="showBooks()">
+                <span class="sidebar-nav-icon">🕮</span>
+                <span class="sidebar-nav-label">Uploaded Books</span>
+            </button>
+            <button class="sidebar-nav-item" id="snav-summary" onclick="showSummary()">
+                <span class="sidebar-nav-icon">✦</span>
+                <span class="sidebar-nav-label">Summarize</span>
+            </button>
+            <button class="sidebar-nav-item" id="snav-mindmap" onclick="showMindMap()">
+                <span class="sidebar-nav-icon">☁️</span>
+                <span class="sidebar-nav-label">Mind Map</span>
+            </button>
+            <button class="sidebar-nav-item" id="snav-quiz" onclick="showQuiz()">
+                <span class="sidebar-nav-icon">🧠</span>
+                <span class="sidebar-nav-label">Quiz</span>
+            </button>
+            <!-- History divider -->
+            <div style="margin:12px 4px 8px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding:0 12px;">
+                Recent
+            </div>
+
+            <!-- History list -->
+            <div id="sidebar-history-list" style="display:flex; flex-direction:column; gap:2px; overflow-y:auto; max-height:300px;">
+                <div style="font-size:0.78rem; color:var(--muted); padding:8px 16px; font-style:italic;">No history yet.</div>
+            </div>
+        </nav>
+
+        <!-- Bottom actions -->
+        <div class="sidebar-bottom">
+            <!-- Profile -->
+            <div class="sidebar-profile" id="sidebar-profile" onclick="toggleSidebarProfile()">
+                <div class="sidebar-profile-avatar">👤</div>
+                <div class="sidebar-profile-info">
+                    <div class="sidebar-profile-name" id="profile-name">—</div>
+                    <div class="sidebar-profile-email" id="profile-email">—</div>
+                </div>
+                <span style="color:var(--muted); font-size:0.8rem;">⋯</span>
+            </div>
+
+            <!-- Profile dropdown -->
+            <div id="sidebar-profile-dropdown" style="display:none;" class="sidebar-profile-dropdown">
+                <button class="btn-icon" id="dark-mode-btn" onclick="toggleDarkMode()" style="width:100%; border-radius:10px; text-align:left; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+                    <span>◑</span> <span style="font-size:0.85rem;">Dark Mode</span>
+                </button>
+                <button onclick="logout()" style="width:100%; background:none; border:1px solid rgba(192,98,90,0.3); color:var(--danger); font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:500; padding:10px 14px; border-radius:10px; cursor:pointer; margin-top:6px; text-align:left; transition:all 0.2s;">
+                    ↩ Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
         <div class="dashboard-content">
 
             <!-- UPLOAD SECTION -->
@@ -174,15 +211,14 @@
                         <h2>Upload Content</h2>
                         <p>Choose how you want to add content for summarization.</p>
                     </div>
-
                     <div class="field mb-4">
                         <label>What do you want to upload?</label>
                         <div class="toggle-group" id="input-type-toggle">
                             <button class="toggle-btn active" data-value="file" onclick="setToggle('input-type-toggle', this); switchInputType('file')">📄 Upload File</button>
                             <button class="toggle-btn" data-value="text" onclick="setToggle('input-type-toggle', this); switchInputType('text')">✎ Paste Text</button>
+                            <button class="toggle-btn" data-value="youtube" onclick="setToggle('input-type-toggle', this); switchInputType('youtube')">▶ YouTube</button>
                         </div>
                     </div>
-
                     <div id="file-upload-fields">
                         <div class="field mb-3">
                             <label>Book Title</label>
@@ -201,22 +237,25 @@
                             </div>
                         </div>
                     </div>
-
                     <div id="text-upload-fields" style="display:none;">
                         <div class="field mb-4">
                             <label>Paste Text</label>
                             <textarea id="pasted-text" class="field-input" rows="10" placeholder="Paste your content here..."></textarea>
                         </div>
                     </div>
-
+                    <div id="youtube-upload-fields" style="display:none;">
+                        <div class="field mb-3">
+                            <label>YouTube URL</label>
+                            <input type="text" id="youtube-url" class="field-input" placeholder="e.g. https://www.youtube.com/watch?v=...">
+                        </div>
+                        <p style="font-size:0.78rem; color:var(--muted); margin-top:-8px; margin-bottom:16px;">⚠ Video must have captions/subtitles enabled.</p>
+                    </div>
                     <button class="btn-main" onclick="uploadBook()">Upload</button>
-
                     <div id="upload-result" style="display:none; margin-top:16px;">
                         <p style="font-size:0.875rem; color:var(--muted);">Uploaded successfully. Your ID: <strong id="uploaded-id" style="color:var(--accent); font-size:1rem;"></strong></p>
                         <p style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Use this ID to generate a summary, mind map, or quiz.</p>
                     </div>
-
-                    <button class="btn-main mt-3" id="goto-summary-btn" style="display:none; background: var(--accent2);" onclick="goToSummary()">Go to Summarization →</button>
+                    <button class="btn-main mt-3" id="goto-summary-btn" style="display:none; background:var(--accent2);" onclick="goToSummary()">Go to Summarization →</button>
                 </div>
             </div>
 
@@ -227,12 +266,10 @@
                         <h2>Generate Summary</h2>
                         <p>Enter a Book ID and choose your preferred summary style.</p>
                     </div>
-
                     <div class="field mb-3">
                         <label>Book ID</label>
                         <input type="text" id="book_id" class="field-input" placeholder="e.g. B1 or T3">
                     </div>
-
                     <div style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
                         <div class="field" style="flex:1; min-width:160px;">
                             <label>Format</label>
@@ -251,23 +288,40 @@
                             </div>
                         </div>
                     </div>
-
+                    <div class="field mb-4">
+                        <label>Role</label>
+                        <div class="toggle-group" id="role-summary-toggle" style="flex-wrap:wrap;">
+                            <button class="toggle-btn active" data-value="general" onclick="setToggle('role-summary-toggle', this)">General</button>
+                            <button class="toggle-btn" data-value="executive" onclick="setToggle('role-summary-toggle', this)">Executive</button>
+                            <button class="toggle-btn" data-value="technical" onclick="setToggle('role-summary-toggle', this)">Technical</button>
+                            <button class="toggle-btn" data-value="student" onclick="setToggle('role-summary-toggle', this)">Student</button>
+                            <button class="toggle-btn" data-value="researcher" onclick="setToggle('role-summary-toggle', this)">Researcher</button>
+                            <button class="toggle-btn" data-value="legal" onclick="setToggle('role-summary-toggle', this)">Legal</button>
+                            <button class="toggle-btn" data-value="creative" onclick="setToggle('role-summary-toggle', this)">Creative</button>
+                            <button class="toggle-btn" data-value="medical" onclick="setToggle('role-summary-toggle', this)">Medical</button>
+                            <button class="toggle-btn" data-value="analyst" onclick="setToggle('role-summary-toggle', this)">Analyst</button>
+                            <button class="toggle-btn" data-value="educator" onclick="setToggle('role-summary-toggle', this)">Educator</button>
+                        </div>
+                    </div>
                     <div style="display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; align-items:center;">
                         <button class="btn-main" id="generate-btn" onclick="generateSummary()">Generate Summary</button>
                         <button class="btn-main" id="regenerate-btn" style="display:none;" onclick="regenerateSummary()">↺ Regenerate</button>
                         <button class="btn-main" id="history-btn" style="display:none;" onclick="toggleHistory()">⌛ History</button>
+                        <button class="btn-main" id="insights-btn" style="display:none;" onclick="toggleInsights()">✦ Key Insights</button>
                         <button class="btn-main" id="copy-btn" style="display:none;" onclick="copySummary()">🗐 Copy</button>
                         <button class="btn-main" id="download-btn" style="display:none;" onclick="downloadPDF()">↓ Download PDF</button>
                     </div>
-
                     <div id="summary-box" style="display:none;">
                         <div class="summary-chip">✦ Summary</div>
                         <div id="summary-text"></div>
                     </div>
-
                     <div id="history-box" style="display:none;">
                         <div class="summary-chip">🕘 Summary History</div>
                         <div id="history-list"></div>
+                    </div>
+                    <div id="insights-box" style="display:none; margin-top:20px;">
+                        <div class="summary-chip">✦ Key Insights</div>
+                        <div id="insights-list" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
                     </div>
                 </div>
             </div>
@@ -310,37 +364,36 @@
                 <div class="floating-card content-card" id="quiz-card">
                     <div class="content-header">
                         <h2>Quiz Generator</h2>
-                        <p>Test your understanding of the book with an AI-generated quiz.</p>
+                        <p>Test your understanding with 10 AI-generated questions across easy, medium and hard difficulty.</p>
                     </div>
-
                     <div class="field mb-3">
                         <label>Book ID</label>
                         <input type="text" id="quiz-book-id" class="field-input" placeholder="e.g. B1 or T3">
                     </div>
-
-                    <div style="margin-bottom: 24px;">
+                    <div style="margin-bottom:24px;">
                         <button class="btn-main" id="quiz-generate-btn" onclick="startQuiz()">Generate Quiz</button>
                     </div>
-
                     <div id="quiz-box" style="display:none;">
                         <div id="quiz-question-box" style="display:none;">
-                            <div class="summary-chip" id="quiz-progress">Question 1 of 5</div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                                <div class="summary-chip" id="quiz-progress">Question 1 of 10</div>
+                                <div id="quiz-difficulty-badge"></div>
+                            </div>
                             <div id="quiz-question" style="font-size:1rem; font-weight:600; color:var(--text); margin-bottom:20px; line-height:1.6;"></div>
                             <div id="quiz-options" style="display:flex; flex-direction:column; gap:10px;"></div>
                             <div id="quiz-feedback" style="display:none; margin-top:16px; padding:12px 16px; border-radius:10px; font-size:0.875rem; font-weight:500;"></div>
+                            <div id="quiz-explanation" style="display:none; margin-top:10px; padding:12px 16px; border-radius:10px; font-size:0.82rem; line-height:1.6; background:rgba(61,92,58,0.06); border:1px solid rgba(61,92,58,0.15); color:var(--muted);"></div>
                             <button class="btn-main" id="quiz-next-btn" style="display:none; margin-top:16px;" onclick="nextQuestion()">Next →</button>
                         </div>
-
                         <div id="quiz-results-box" style="display:none;">
                             <div style="text-align:center; margin-bottom:28px;">
                                 <div style="font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:700; color:var(--accent);" id="quiz-score-display"></div>
                                 <div style="font-size:0.875rem; color:var(--muted); margin-top:4px;">Your Score</div>
                                 <div style="font-size:1rem; font-weight:600; color:var(--text); margin-top:12px;" id="quiz-score-msg"></div>
                             </div>
-
+                            <div id="quiz-difficulty-scores" style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;"></div>
                             <div class="summary-chip">📋 Review</div>
                             <div id="quiz-review"></div>
-
                             <button class="btn-main" style="margin-top:20px;" onclick="startQuiz()">↺ Try Again</button>
                         </div>
                     </div>
@@ -349,6 +402,53 @@
 
         </div>
     </div>
+</div>
+
+<!-- EXPLAIN POPUP -->
+<div id="explain-popup" style="display:none; position:fixed; background:rgba(255,255,255,0.95); backdrop-filter:blur(20px); border:1px solid rgba(90,115,87,0.2); border-radius:16px; box-shadow:0 12px 40px rgba(30,45,28,0.2); width:400px; z-index:1000; overflow:hidden;">
+    <div style="padding:12px 16px 10px; border-bottom:1px solid rgba(90,115,87,0.12); background:rgba(61,92,58,0.05); position:relative;">
+        <button onclick="closeExplainPopup()" style="position:absolute; top:10px; right:12px; background:none; border:none; cursor:pointer; color:#5a7357; font-size:0.9rem; line-height:1;">✕</button>
+        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#3d5c3a; margin-bottom:6px;">✦ Selected Text</div>
+        <div id="explain-sentence-preview" style="font-size:0.75rem; color:#5a7357; font-style:italic; line-height:1.5; padding-right:20px;"></div>
+        <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; align-items:center;">
+            <button class="explain-mode-tab active" onclick="switchExplainMode('explain', this)" style="background:rgba(61,92,58,0.1); border:1px solid rgba(61,92,58,0.2); border-radius:20px; padding:4px 12px; font-size:0.7rem; font-weight:600; color:#3d5c3a; cursor:pointer; font-family:'DM Sans',sans-serif;">Explain</button>
+            <button class="explain-mode-tab" onclick="switchExplainMode('simplify', this)" style="background:rgba(61,92,58,0.06); border:1px solid rgba(61,92,58,0.15); border-radius:20px; padding:4px 12px; font-size:0.7rem; font-weight:500; color:#5a7357; cursor:pointer; font-family:'DM Sans',sans-serif;">Simplify</button>
+            <button class="explain-mode-tab" onclick="switchExplainMode('example', this)" style="background:rgba(61,92,58,0.06); border:1px solid rgba(61,92,58,0.15); border-radius:20px; padding:4px 12px; font-size:0.7rem; font-weight:500; color:#5a7357; cursor:pointer; font-family:'DM Sans',sans-serif;">Example</button>
+            <button class="explain-mode-tab" onclick="switchExplainMode('eli5', this)" style="background:rgba(61,92,58,0.06); border:1px solid rgba(61,92,58,0.15); border-radius:20px; padding:4px 12px; font-size:0.7rem; font-weight:500; color:#5a7357; cursor:pointer; font-family:'DM Sans',sans-serif;">ELI5</button>
+        </div>
+    </div>
+    <div id="explain-popup-body" style="padding:14px 16px; font-size:0.82rem; line-height:1.7; color:#1e2d1c; min-height:60px; max-height:200px; overflow-y:auto;">
+        <span style="color:#5a7357; font-style:italic;">Loading...</span>
+    </div>
+</div>
+
+<!-- FLOATING AI CHAT -->
+<div id="ai-chat-wrap" style="display:none; position:fixed; bottom:28px; right:28px; z-index:500; flex-direction:column; align-items:flex-end; gap:12px;">
+    <div id="ai-chat-popup" style="display:none; flex-direction:column; width:420px; background:var(--surface-solid); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:20px; box-shadow:0 12px 40px rgba(30,45,28,0.2); overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(90,115,87,0.15); background:rgba(61,92,58,0.05);">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700;">✦</div>
+                <div>
+                    <div style="font-weight:700; font-size:0.9rem; color:var(--text);">Ask AI</div>
+                    <div style="font-size:0.72rem; color:var(--muted);">Ask anything about your document</div>
+                </div>
+            </div>
+            <button onclick="toggleAIChat()" style="background:none; border:none; cursor:pointer; color:var(--muted); font-size:1.2rem; line-height:1;">✕</button>
+        </div>
+        <div style="padding:10px 12px; border-bottom:1px solid rgba(90,115,87,0.1); display:flex; gap:6px;">
+            <input type="text" id="askai-book-id" class="field-input" placeholder="Enter Book ID (e.g. B1 or T3)" style="font-size:0.8rem; padding:8px 12px;" onblur="loadSuggestions()">
+            <button class="btn-main" onclick="loadSuggestions()" style="padding:8px 12px; font-size:0.75rem; white-space:nowrap;">Load</button>
+        </div>
+        <div id="chat-suggestions" style="display:none; padding:8px 12px; border-bottom:1px solid rgba(90,115,87,0.1); flex-wrap:wrap; gap:6px;"></div>
+        <div id="chat-messages" style="height:280px; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px;">
+            <div style="color:var(--muted); font-size:0.8rem; text-align:center; padding:20px;">Enter a Book ID above and start asking questions!</div>
+        </div>
+        <div style="padding:10px 12px; border-top:1px solid rgba(90,115,87,0.1); display:flex; gap:8px;">
+            <input type="text" id="chat-input" class="field-input" placeholder="Ask a question..." style="font-size:0.85rem; padding:9px 12px;" onkeydown="if(event.key==='Enter') sendMessage()">
+            <button class="btn-main" id="chat-send-btn" onclick="sendMessage()" style="padding:9px 16px; font-size:0.85rem;">↑</button>
+        </div>
+    </div>
+    <button onclick="toggleAIChat()" style="width:52px; height:52px; border-radius:50%; background:var(--accent); color:white; border:none; font-size:1.3rem; cursor:pointer; box-shadow:0 4px 20px rgba(61,92,58,0.4); transition:all 0.2s; display:flex; align-items:center; justify-content:center;">💬</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

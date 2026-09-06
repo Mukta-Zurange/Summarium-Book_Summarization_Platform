@@ -9,6 +9,18 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from preprocessing import preprocess_text
 
+ROLE_PROMPTS = {
+    "general": "",
+    "student": "Write this summary for a student who is learning about this topic for the first time. Use simple language and explain key concepts clearly.",
+    "executive": "Write this summary for a busy executive. Focus only on key decisions, outcomes, business impact, and actionable insights. Be concise and direct.",
+    "technical": "Write this summary for a technical expert. Include technical details, methodologies, specifications, and precise terminology.",
+    "researcher": "Write this summary for an academic researcher. Highlight methodology, findings, evidence, limitations, and implications for future research.",
+    "legal": "Write this summary for a legal professional. Focus on obligations, rights, risks, compliance requirements, and any legal implications.",
+    "creative": "Write this summary in an engaging and creative way. Use vivid language, analogies, and storytelling to make the content interesting and memorable.",
+    "medical": "Write this summary for a medical professional. Focus on clinical details, diagnoses, treatments, medical terminology, and patient outcomes.",
+    "analyst": "Write this summary for a data analyst. Focus on metrics, trends, patterns, quantitative insights, and data-driven conclusions.",
+    "educator": "Write this summary for an educator. Focus on key learning objectives, concepts to teach, and how the content can be used in an educational context.",
+}
 
 def chunk_text(text: str, chunk_size: int = 8000, overlap: int = 0):
     chunks = []
@@ -47,7 +59,7 @@ def get_paragraph_instruction(total_words: int, length: str) -> str:
             return "Write the summary in 4 to 5 paragraphs."
 
 
-def summarize_text(full_text: str, format: str = "paragraph", length: str = "medium", progress_callback=None, existing_chunks: list = None) -> tuple:
+def summarize_text(full_text: str, format: str = "paragraph", length: str = "medium", progress_callback=None, existing_chunks: list = None, role: str = "general") -> tuple:
     import time
 
     # If no existing chunks, process the text
@@ -123,6 +135,8 @@ def summarize_text(full_text: str, format: str = "paragraph", length: str = "med
     if len(combined) > 4000:
         combined = combined[:4000]
 
+    role_instruction = ROLE_PROMPTS.get(role, "")
+
     while True:
         try:
             final = groq_client.chat.completions.create(
@@ -132,6 +146,7 @@ def summarize_text(full_text: str, format: str = "paragraph", length: str = "med
                     "content": (
                         f"Combine these section summaries into one final summary. "
                         f"{format_instruction} "
+                        f"{role_instruction} "
                         "Do not repeat points. "
                         "Do not mention word count or any numbers. "
                         "Do not start with phrases like 'Here is a summary'. "
@@ -232,12 +247,17 @@ import json
 
 def generate_quiz(summary_text: str) -> list:
     prompt = (
-        "Based on the following book summary, generate exactly 5 multiple choice questions.\n"
-        "Each question must have 4 options labeled A, B, C, D.\n"
-        "Return ONLY a single valid JSON array containing 5 objects. No explanation, no markdown, no backticks.\n"
-        "Each object must have exactly these keys: question, options, answer.\n"
-        "Example of exact format to follow:\n"
-        '[{"question": "What is X?", "options": {"A": "one", "B": "two", "C": "three", "D": "four"}, "answer": "A"}, {"question": "What is Y?", "options": {"A": "one", "B": "two", "C": "three", "D": "four"}, "answer": "B"}]\n\n'
+        "Based on the following book summary, generate exactly 10 multiple choice questions.\n"
+        "Create questions at 3 difficulty levels:\n"
+        "- 3 Easy questions (basic facts and concepts)\n"
+        "- 4 Medium questions (understanding and application)\n"
+        "- 3 Hard questions (analysis and inference)\n\n"
+        "Each question must have 4 options labeled A, B, C, D and a brief explanation of why the answer is correct.\n"
+        "Return ONLY a single valid JSON array containing 10 objects. No explanation, no markdown, no backticks.\n"
+        "Each object must have exactly these keys: question, options, answer, difficulty, explanation.\n"
+        "difficulty must be exactly one of: easy, medium, hard\n"
+        "Example format:\n"
+        '[{"question": "What is X?", "options": {"A": "one", "B": "two", "C": "three", "D": "four"}, "answer": "A", "difficulty": "easy", "explanation": "X is one because..."}]\n\n'
         f"Summary:\n{summary_text}"
     )
 
@@ -247,7 +267,6 @@ def generate_quiz(summary_text: str) -> list:
     )
     raw = response.choices[0].message.content.strip()
 
-    # Strip markdown code blocks if present
     if "```" in raw:
         parts = raw.split("```")
         for part in parts:
@@ -258,17 +277,14 @@ def generate_quiz(summary_text: str) -> list:
                 raw = part
                 break
 
-    # Fix "question1", "question2" keys -> "question"
     import re, json
     raw = re.sub(r'"question\d+"', '"question"', raw)
 
-    # Try parsing directly first — raw may already be valid
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
         pass
 
-    # Fallback: find first [ to last ]
     start = raw.find("[")
     end = raw.rfind("]")
     if start == -1 or end == -1:

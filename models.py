@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -88,3 +88,23 @@ class Summary(Base):
 
     book = relationship("Book", back_populates="summaries")
     pasted_text = relationship("PastedText", back_populates="summaries")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    book_id = Column(Integer, ForeignKey("books.book_id"), nullable=True)
+    pasted_id = Column(Integer, ForeignKey("pasted_texts.pasted_id"), nullable=True)
+    role = Column(String(10), nullable=False)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(150), nullable=False)
+    otp = Column(String(6), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
