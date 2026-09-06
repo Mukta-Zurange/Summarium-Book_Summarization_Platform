@@ -77,7 +77,7 @@ Available roles include:
 | 🎨 Creative    | Engaging explanations, analogies and storytelling               |
 | 🩺 Medical     | Clinical details, treatments and outcomes                       |
 | 📊 Analyst     | Metrics, trends, patterns and data-driven conclusions           |
-| 👨‍🏫 Educator | Learning objectives and concepts useful for teaching            |
+| 👨‍🏫 Educator    | Learning objectives and concepts useful for teaching            |
 
 The selected role is incorporated into the LLM prompt so that the final summary is adapted to the intended audience.
 
@@ -390,9 +390,6 @@ Summarium-Book_Summarization_Platform/
 ├── utils.py
 │   └── Supporting utility functions
 │
-├── book_summarizer_dump.sql
-│   └── MySQL database dump
-│
 ├── requirements.txt
 │   └── Python dependencies
 │
@@ -403,7 +400,7 @@ Summarium-Book_Summarization_Platform/
     └── Project documentation
 ```
 
-The current repository contains the FastAPI application, authentication utilities, database layer, extraction/preprocessing modules, summarization logic, SQL dump, frontend assets, and environment configuration.
+The current repository contains the FastAPI application, authentication utilities, database layer, extraction/preprocessing modules, summarization logic, frontend assets, and environment configuration.
 
 ---
 
@@ -423,11 +420,6 @@ The database manages information related to:
 * Summary history
 * Chat messages
 
-The repository also includes a database dump:
-
-```text
-book_summarizer_dump.sql
-```
 
 The database allows the application to maintain user data, uploaded content, generated summaries, and historical results.
 
@@ -512,11 +504,6 @@ Create the database:
 CREATE DATABASE book_summarizer;
 ```
 
-Import the provided database dump:
-
-```bash
-mysql -u root -p book_summarizer < book_summarizer_dump.sql
-```
 
 If you are using a cloud MySQL provider, configure the corresponding host, username, password, database name, and port in `.env`.
 
