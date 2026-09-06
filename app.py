@@ -652,7 +652,7 @@ def ask_ai(
     while True:
         try:
             response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=messages
             )
             break
@@ -719,7 +719,7 @@ def get_chat_suggestions(
     while True:
         try:
             response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=[{
                     "role": "user",
                     "content": (
@@ -771,7 +771,7 @@ def explain_text(
     while True:
         try:
             response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=[{
                     "role": "user",
                     "content": f"{prompt}\n\n\"{sentence}\""
@@ -892,7 +892,7 @@ def get_insights(
     while True:
         try:
             response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=[{
                     "role": "user",
                     "content": (
